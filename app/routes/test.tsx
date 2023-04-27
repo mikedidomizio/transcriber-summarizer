@@ -24,6 +24,11 @@ export default function Test() {
             body: '',
         })
 
+        const res3 = await fetch('./chatgpt', {
+            method: 'POST',
+            body: '',
+        })
+
         const url = URL.createObjectURL(blob);
         const audio = document.createElement("audio");
         audio.src = url;
