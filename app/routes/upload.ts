@@ -6,7 +6,7 @@ import * as fs from "fs";
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
 if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
-    throw new Error('AWS S3 environment variables not set up correctly')
+    throw new Error('AWS environment variables not set up correctly')
 }
 
 export const action = async ({request}: ActionArgs) => {

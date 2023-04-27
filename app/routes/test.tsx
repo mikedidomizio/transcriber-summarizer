@@ -19,6 +19,11 @@ export default function Test() {
             body: formData
         });
 
+        const res2 = await fetch('./transcribe', {
+            method: 'POST',
+            body: '',
+        })
+
         const url = URL.createObjectURL(blob);
         const audio = document.createElement("audio");
         audio.src = url;
