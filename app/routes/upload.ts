@@ -9,7 +9,9 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
-export const action = async ({request}: ActionArgs) => {
+export type UploadResponse = { filename?: string, status: number }
+
+export const action = async ({request}: ActionArgs): Promise<UploadResponse> => {
     const uploadHandler = unstable_createFileUploadHandler({
         file: ({ filename }) => filename })
 
@@ -32,9 +34,11 @@ export const action = async ({request}: ActionArgs) => {
 
     const readableStream = fs.createReadStream((audioBlob as any).filepath);
 
+    const newFileNameWithTimestamp = `hello-s3+${new Date().getTime()}.webm`
+
     const command = new PutObjectCommand({
         Bucket: AWS_S3_BUCKET,
-        Key: "hello-s3.webm",
+        Key: newFileNameWithTimestamp,
         Body: readableStream,
         ContentType: 'audio/webm',
     });
@@ -42,8 +46,10 @@ export const action = async ({request}: ActionArgs) => {
     // todo these status codes aren't working correctly
     try {
         await client.send(command);
+
         return json(
             {
+                "filename": newFileNameWithTimestamp,
                 status: 201,
             }
         );

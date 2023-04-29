@@ -1,5 +1,5 @@
 import { TranscribeClient, StartTranscriptionJobCommand } from "@aws-sdk/client-transcribe";
-import {ActionArgs} from "@remix-run/node";
+import type {ActionArgs} from "@remix-run/node";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
@@ -16,13 +16,18 @@ export const action = async ({request}: ActionArgs) => {
         }
     }
 
+    const data = await request.json()
+
+    console.log(data)
+
     const client = new TranscribeClient(config);
 
     const input = {
         LanguageCode: 'en-US',
-        TranscriptionJobName: 'test-transcriber-summarizer-job',
-        Media: { // Media
-            MediaFileUri: `s3://${AWS_S3_BUCKET}/hello-s3.webm`,
+        // todo it should be more randomized
+        TranscriptionJobName: `test-transcriber-summarizer-job-${data.timestamp}`,
+        Media: {
+            MediaFileUri: `s3://${AWS_S3_BUCKET}/${data.timestamp}.webm`,
         },
     }
 
