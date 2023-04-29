@@ -2,8 +2,8 @@ import type {V2_MetaFunction} from "@remix-run/node";
 import {AudioRecorder} from "react-audio-voice-recorder";
 
 import React, {useState} from "react";
-import type {UploadResponse} from "~/routes/upload";
-import type {TranscribeResponse} from "~/routes/transcribe";
+import type {UploadResponse} from "~/routes/api/upload";
+import type {TranscribeResponse} from "~/routes/api/transcribe";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "New Remix App" }];
@@ -16,7 +16,7 @@ export default function Test() {
         const formDataUpload  = new FormData();
         formDataUpload.set("audioBlob", blob, "audio.wav");
 
-        const uploadRes = await fetch('./upload', {
+        const uploadRes = await fetch('./api/upload', {
             method: 'POST',
             body: formDataUpload
         });
@@ -32,7 +32,7 @@ export default function Test() {
         const formDataTranscribe = new FormData()
         formDataTranscribe.set("s3Filename", uploadResponse.filename)
 
-        const transcribeRes = await fetch('./transcribe', {
+        const transcribeRes = await fetch('./api/transcribe', {
             method: 'POST',
             body: formDataTranscribe,
         })
@@ -43,7 +43,7 @@ export default function Test() {
 
         return null
 
-        const res3 = await fetch('./chatgpt', {
+        const res3 = await fetch('./api/chatgpt', {
             method: 'POST',
             body: '',
         })
