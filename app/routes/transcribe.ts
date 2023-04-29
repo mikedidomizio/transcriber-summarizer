@@ -7,7 +7,11 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
-export const action = async ({request}: ActionArgs) => {
+export type TranscribeResponse = {
+
+}
+
+export const action = async ({request}: ActionArgs): Promise<TranscribeResponse> => {
     const config = {
         region: 'us-east-1',
         credentials:{
@@ -16,24 +20,23 @@ export const action = async ({request}: ActionArgs) => {
         }
     }
 
-    const data = await request.json()
-
-    console.log(data)
+    const formData = await request.formData();
+    const s3Filename = formData.get('s3Filename') as FormDataEntryValue
 
     const client = new TranscribeClient(config);
+    const s3Location = `s3://${AWS_S3_BUCKET}/${s3Filename}`
+
+    console.log('Attempt to transcribe S3 file:', s3Location)
 
     const input = {
         LanguageCode: 'en-US',
-        // todo it should be more randomized
-        TranscriptionJobName: `test-transcriber-summarizer-job-${data.timestamp}`,
+        // todo it should be more unique to avoid conflicts
+        TranscriptionJobName: `test-transcriber-summarizer-job-${s3Filename}`,
         Media: {
-            MediaFileUri: `s3://${AWS_S3_BUCKET}/${data.timestamp}.webm`,
+            MediaFileUri: s3Location,
         },
     }
 
     const command = new StartTranscriptionJobCommand(input);
-    const response = await client.send(command);
-
-    console.log(response)
-    return null
+    return client.send(command);
 }

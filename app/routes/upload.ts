@@ -1,6 +1,11 @@
 import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import type {ActionArgs} from "@remix-run/node";
-import { json, unstable_createFileUploadHandler, unstable_parseMultipartFormData} from "@remix-run/node";
+import {
+    json,
+    unstable_composeUploadHandlers,
+    unstable_createFileUploadHandler, unstable_createMemoryUploadHandler,
+    unstable_parseMultipartFormData
+} from "@remix-run/node";
 import * as fs from "fs";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
@@ -12,10 +17,14 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
 export type UploadResponse = { filename?: string, status: number }
 
 export const action = async ({request}: ActionArgs): Promise<UploadResponse> => {
-    const uploadHandler = unstable_createFileUploadHandler({
-        file: ({ filename }) => filename })
+    const uploadHandler = unstable_composeUploadHandlers(
+        unstable_createFileUploadHandler({
+            // directory: './public/uploads',
+            file: ({ filename }) => filename,
+        }),
+        unstable_createMemoryUploadHandler()
+    )
 
-    // get the form data from the POST
     const formData = await unstable_parseMultipartFormData(
         request,
         uploadHandler
@@ -33,8 +42,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     });
 
     const readableStream = fs.createReadStream((audioBlob as any).filepath);
-
-    const newFileNameWithTimestamp = `hello-s3+${new Date().getTime()}.webm`
+    const newFileNameWithTimestamp = `hello-s3-${new Date().getTime()}.webm`
 
     const command = new PutObjectCommand({
         Bucket: AWS_S3_BUCKET,
@@ -43,7 +51,6 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
         ContentType: 'audio/webm',
     });
 
-    // todo these status codes aren't working correctly
     try {
         await client.send(command);
 
@@ -51,13 +58,13 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
             {
                 "filename": newFileNameWithTimestamp,
                 status: 201,
-            }
+            } as UploadResponse
         );
     } catch (err) {
         return json(
             {
                 status: 520,
-            }
+            } as UploadResponse
         );
     }
 }
