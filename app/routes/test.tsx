@@ -10,6 +10,7 @@ import {WhoIsThisAudio} from "~/components/WhoIsThisAudio";
 import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
 import {Error} from "~/components/Error";
+import {Uploading} from "~/components/Uploading";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
@@ -18,13 +19,11 @@ export const meta: V2_MetaFunction = () => {
 type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
 
 export default function Test() {
-    const [blobUrl, setBlobUrl] = useState<string | null>(null)
+    const [blob, setBlob] = useState<{ blob: Blob, blobUrl: string } | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [processState, setProcessState] = useState<"start" | "finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | null>("start")
+    const [processState, setProcessState] = useState<"start" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | null>("start")
     const [audioFiles, setAudioFiles] = useState<string[]>([])
-
     const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
-
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
     const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson | null>(null)
     const [transcribeText, setTranscribeText] = useState("")
@@ -49,34 +48,12 @@ export default function Test() {
         }
     }, [audioFiles])
 
-    const finishRecording = async (blob: Blob) => {
-        setProcessState("finishRecording")
-        setBlobUrl(URL.createObjectURL(blob))
-        await upload(blob)
-    }
-
-    const upload = async(blob: Blob) => {
+    const upload = (blob: Blob) => {
+        const blobUrl = URL.createObjectURL(blob)
+        setBlob({
+            blob, blobUrl
+        })
         setProcessState("uploading")
-        const formDataUpload  = new FormData();
-        formDataUpload.set("audioBlob", blob, "audio.wav");
-
-        try {
-            const uploadRes = await fetch('./upload', {
-                method: 'POST',
-                body: formDataUpload
-            });
-
-            const uploadResponse: UploadResponse = await uploadRes.json()
-
-            if (!uploadResponse.filename) {
-                setError("Failed on getting a filename for the S3 file")
-                return
-            }
-
-            return transcribe(uploadResponse.filename)
-        } catch(e) {
-            setError("Failed on uploading to AWS")
-        }
     }
 
     const transcribe = async(filename: string) => {
@@ -142,7 +119,7 @@ export default function Test() {
             setProcessState("identify")
             const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map(i => {
                 return {
-                    blobUrl: blobUrl || "",
+                    blobUrl: blob?.blobUrl || "",
                     speakerLabel: i.speaker_label,
                     startTime: i.start_time
                 }
@@ -210,14 +187,17 @@ export default function Test() {
 
     if (processState === "start") {
         return (
-            <GettingStarted onFinishRecording={finishRecording} />
+            <GettingStarted onFinishRecording={upload} />
         )
+    }
+
+    if (processState === "uploading" && blob) {
+        return <Uploading blob={blob.blob} onComplete={transcribe} onError={setError} />
     }
 
     return (
         <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-            <AudioRecorder onRecordingComplete={finishRecording} />
-
+            <AudioRecorder onRecordingComplete={upload} />
 
             {processState}
 
