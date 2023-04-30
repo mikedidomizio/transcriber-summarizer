@@ -9,23 +9,24 @@ import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
 import {WhoIsThisAudio} from "~/components/WhoIsThisAudio";
 import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
+import {Error} from "~/components/Error";
 
 export const meta: V2_MetaFunction = () => {
-    return [{ title: "New Remix App" }];
+    return [{ title: "Transcriber Summarizer" }];
 };
 
 type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
 
 export default function Test() {
-
     const [blobUrl, setBlobUrl] = useState<string | null>(null)
-    const [processState, setProcessState] = useState<"start" | "finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | "error" | null>("start")
+    const [error, setError] = useState<string | null>(null)
+    const [processState, setProcessState] = useState<"start" | "finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | null>("start")
     const [audioFiles, setAudioFiles] = useState<string[]>([])
 
     const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
 
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
-    const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson>(null)
+    const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson | null>(null)
     const [transcribeText, setTranscribeText] = useState("")
     const [summary, setSummary] = useState("")
 
@@ -68,13 +69,13 @@ export default function Test() {
             const uploadResponse: UploadResponse = await uploadRes.json()
 
             if (!uploadResponse.filename) {
-                setProcessState("error")
+                setError("Failed on getting a filename for the S3 file")
                 return
             }
 
             return transcribe(uploadResponse.filename)
         } catch(e) {
-            setProcessState("error")
+            setError("Failed on uploading to AWS")
         }
     }
 
@@ -95,7 +96,7 @@ export default function Test() {
             setTranscribeJob(transcribeResponse.TranscriptionJob?.TranscriptionJobName)
             setProcessState("polling")
         } else {
-            setProcessState("error")
+            setError("Failed on transcribing the file")
         }
     }
 
@@ -115,7 +116,7 @@ export default function Test() {
                 setTranscribeJob(null)
                 await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
             } else {
-                setProcessState("error")
+                setError("Failed polling the transcribe job")
             }
         }
     }
@@ -149,7 +150,7 @@ export default function Test() {
 
             setSpeakersToIdentify(peopleToIdentity)
         } else {
-            setProcessState("error")
+            setError("Failed when updating the object of identifying speakers")
         }
     }
 
@@ -193,9 +194,18 @@ export default function Test() {
     }
 
     const handleFinishIdentifying = () => {
-        const summarizedText = separateBySpeaker(transcribeJobJSON)
-        setTranscribeText(summarizedText)
-        return summarizing(summarizedText)
+        if (transcribeJobJSON) {
+            const summarizedText = separateBySpeaker(transcribeJobJSON)
+            setTranscribeText(summarizedText)
+            return summarizing(summarizedText)
+        } else {
+            setError("Somehow I don't have the transcribe JSON")
+        }
+
+    }
+
+    if (error !== null) {
+        return <Error error={error} />
     }
 
     if (processState === "start") {

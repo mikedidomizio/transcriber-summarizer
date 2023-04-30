@@ -10,6 +10,7 @@ export const GettingStarted = ({ onFinishRecording }: GettingStartedProps) => {
         <div className="hero-content text-center">
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">Transcriber Summarizer</h1>
+                <h2 className="text-2xl font-bold pt-2">By Mike DiDomizio</h2>
                 <p className="py-6">I have the ability to take audio and summarize it for you
                     <br/>
                     Click the record button below to get started!
