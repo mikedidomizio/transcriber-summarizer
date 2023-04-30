@@ -12,7 +12,7 @@ export const meta: V2_MetaFunction = () => {
 };
 
 export default function Test() {
-    const [pollingState, setTranscribeState] = useState<"uploading" | "transcribing" | "polling" | "getText" | "summarizing" | "error" | null>(null)
+    const [pollingState, setTranscribeState] = useState<"uploading" | "transcribing" | "polling" | "getText" | "summarizing" | "done" | "error" | null>(null)
     const [audioFiles, setAudioFiles] = useState<HTMLAudioElement[]>([])
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
     const [transcribeText, setTranscribeText] = useState("")
@@ -130,6 +130,7 @@ export default function Test() {
         const json = await res.json()
 
         setSummary(json as string)
+        setTranscribeState("done")
     }
 
     //     const url = URL.createObjectURL(blob);
@@ -147,6 +148,7 @@ export default function Test() {
             <AudioRecorder onRecordingComplete={upload} />
             <>{audioFiles.map(i => document.body.append(i))}</>
             {pollingState}
+
             <div className="flex columns-2">
                 <div>
                     {transcribeText}
