@@ -11,6 +11,7 @@ import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
 import {Error} from "~/components/Error";
 import {Uploading} from "~/components/Uploading";
+import {Transcribe} from "~/components/Transcribe";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
@@ -193,6 +194,10 @@ export default function Test() {
 
     if (processState === "uploading" && blob) {
         return <Uploading blob={blob.blob} onComplete={transcribe} onError={setError} />
+    }
+
+    if (processState === "transcribing" || processState === "polling") {
+        return <Transcribe />
     }
 
     return (
