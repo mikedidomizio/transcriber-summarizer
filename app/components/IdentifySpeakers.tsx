@@ -33,24 +33,22 @@ export const IdentifySpeakers = ({ onFinish, speakers }: IdentifySpeakersProps) 
                 <h1 className="text-4xl font-bold">Cool we're almost done!</h1>
                 {speakers.length > 0 ? <>
                     <p>Let's give names to these awesome people</p>
-                    <p className="mt-4">
-                        <div className="overflow-x-auto my-4">
-                            <table className="table w-full">
-                                <thead>
-                                <tr>
-                                    <th>Audio</th>
-                                    <th>Name</th>
-                                </tr>
-                                </thead>
-                                <tbody>
-                                {speakers.map(({ blobUrl, speakerLabel, startTime }) => (
-                                    <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
-                                ))}
-                                </tbody>
-                            </table>
-                            <button className="btn btn-primary mt-4" onClick={() => onFinish(speakersState)} >Click here when finished identifying speakers</button>
-                        </div>
-                    </p>
+                    <div className="overflow-x-auto my-4">
+                        <table className="table w-full">
+                            <thead>
+                            <tr>
+                                <th>Audio</th>
+                                <th>Name</th>
+                            </tr>
+                            </thead>
+                            <tbody>
+                            {speakers.map(({ blobUrl, speakerLabel, startTime }) => (
+                                <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
+                            ))}
+                            </tbody>
+                        </table>
+                        <button className="btn btn-primary mt-4" onClick={() => onFinish(speakersState)} >Click here when finished identifying speakers</button>
+                    </div>
                 </> : null}
 
                 {speakers.length === 0 ? <div className="my-4">Woah no speakers?  Did anyone speak?</div> : null}
