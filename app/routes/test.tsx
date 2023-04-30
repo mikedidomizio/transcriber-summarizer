@@ -6,8 +6,9 @@ import type {UploadResponse} from "~/routes/upload";
 import type {TranscribeResponse} from "~/routes/transcribe";
 import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
-import {WhoIsThisAudio} from "~/components/whoIsThisAudio";
+import {WhoIsThisAudio} from "~/components/WhoIsThisAudio";
 import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
+import {GettingStarted} from "~/components/GettingStarted";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "New Remix App" }];
@@ -18,7 +19,7 @@ type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
 export default function Test() {
 
     const [blobUrl, setBlobUrl] = useState<string | null>(null)
-    const [processState, setProcessState] = useState<"finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | "error" | null>(null)
+    const [processState, setProcessState] = useState<"start" | "finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | "error" | null>("start")
     const [audioFiles, setAudioFiles] = useState<string[]>([])
 
     const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
@@ -197,9 +198,16 @@ export default function Test() {
         return summarizing(summarizedText)
     }
 
+    if (processState === "start") {
+        return (
+            <GettingStarted onFinishRecording={finishRecording} />
+        )
+    }
+
     return (
         <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
             <AudioRecorder onRecordingComplete={finishRecording} />
+
 
             {processState}
 
@@ -207,7 +215,6 @@ export default function Test() {
                 <>{speakersToIdentify.map(({ blobUrl, speakerLabel, startTime }) => (
                     <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
                 ))}
-
                     <input type="button" onClick={handleFinishIdentifying} value="Finished Identifying" />
                 </>
             : null}
