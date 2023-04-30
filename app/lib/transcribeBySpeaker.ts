@@ -1,4 +1,4 @@
-import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
+import type {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 
 export const separateBySpeaker = (
     json: AwsTranscribeJobJson,
@@ -7,7 +7,7 @@ export const separateBySpeaker = (
 }
 
 const separateBySpeakerParagraph = (json: AwsTranscribeJobJson): string => {
-    let previousSpeaker: string = null
+    let previousSpeaker: string | null = null
 
     return json.results.items.reduce((acc, cur) => {
         const isNewSpeaker = cur.speaker_label !== previousSpeaker

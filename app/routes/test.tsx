@@ -10,8 +10,9 @@ import {Error} from "~/components/Error";
 import {Uploading} from "~/components/Uploading";
 import {Transcribe} from "~/components/Transcribe";
 import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
-import {IdentifySpeakers, Replacements} from "~/components/IdentifySpeakers";
-import {Segment} from "~/lib/aws-transcribe.types";
+import {IdentifySpeakers} from "~/components/IdentifySpeakers";
+import type {Segment} from "~/lib/aws-transcribe.types";
+import {Summarize} from "~/components/Summarize";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
@@ -20,25 +21,12 @@ export const meta: V2_MetaFunction = () => {
 export default function Test() {
     const [blob, setBlob] = useState<{ blob: Blob, blobUrl: string } | null>(null)
     const [error, setError] = useState<string | null>(null)
-    const [processState, setProcessState] = useState<"start" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | null>("start")
+    const [processState, setProcessState] = useState<"start" | "uploading" | "transcribing" | "identify" | "summarizing" | "done">("start")
     const [audioFiles, setAudioFiles] = useState<string[]>([])
     const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
     const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson | null>(null)
     const [transcribeText, setTranscribeText] = useState("")
-    const [summary, setSummary] = useState("")
-
-    useEffect(() => {
-        if (processState === "polling" && transcribeJob) {
-            let interval  = setInterval(async() => {
-                await pollTranscribeJob(transcribeJob)
-            }, 3000)
-
-            return () => {
-                clearInterval(interval)
-            }
-        }
-    }, [processState])
 
     useEffect(() => {
         return () => {
@@ -55,89 +43,19 @@ export default function Test() {
         setProcessState("uploading")
     }
 
-    const transcribe = async(filename: string) => {
-        setProcessState("transcribing")
-
-        const formDataTranscribe = new FormData()
-        formDataTranscribe.set("s3Filename", filename)
-
-        const transcribeRes = await fetch('./transcribe', {
-            method: 'POST',
-            body: formDataTranscribe,
-        })
-
-        const transcribeResponse: TranscribeResponse = await transcribeRes.json()
-
-        if (transcribeResponse.TranscriptionJob?.TranscriptionJobName) {
-            setTranscribeJob(transcribeResponse.TranscriptionJob?.TranscriptionJobName)
-            setProcessState("polling")
-        } else {
-            setError("Failed on transcribing the file")
-        }
-    }
-
-    const pollTranscribeJob = async(jobName: string) => {
-        const formDataPollingTranscribeJob = new FormData()
-        formDataPollingTranscribeJob.set("jobName", jobName)
-
-        const pollTranscribePollRes = await fetch('./pollTranscribeJob', {
-            method: 'POST',
-            body: formDataPollingTranscribeJob
-        });
-
-        const pollTranscribePollResponse: GetTranscriptionJobResponse = await pollTranscribePollRes.json()
-
-        if (pollTranscribePollResponse.TranscriptionJob?.TranscriptionJobStatus === "COMPLETED") {
-            if (pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri) {
-                setTranscribeJob(null)
-                await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
-            } else {
-                setError("Failed polling the transcribe job")
-            }
-        }
-    }
-
-    const getText = async(transcriptionJobFileUri: string) => {
-        setProcessState("getText")
-        const formDataGetText = new FormData()
-        formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
-
-        const res = await fetch('./getText', {
-            method: 'POST',
-            body: formDataGetText
-        });
-
-        const json = await res.json()
-
-        setTranscribeJobJSON(json)
-
-        const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map((i: Segment) => {
-            return {
-                blobUrl: blob?.blobUrl || "",
-                speakerLabel: i.speaker_label,
-                startTime: i.start_time
-            }
-        })
-
-        setSpeakersToIdentify(peopleToIdentity)
-        setProcessState("identify")
-    }
-
-    const summarizing = async(summarizedTextForOpenAI: string) => {
+    const summarizing = async(textforOpenAi: string) => {
+        setTranscribeText(textforOpenAi)
         setProcessState("summarizing")
+    }
 
-        const formDataSummarizing = new FormData()
-        formDataSummarizing.set("summarizedTextForOpenAI", summarizedTextForOpenAI)
-
-        const res = await fetch('./chatgpt', {
-            method: 'POST',
-            body: formDataSummarizing
-        });
-
-        const json = await res.json()
-
-        setSummary(json as string)
+    const handleCompleteSummarizing = (openAiResponse: string) => {
         setProcessState("done")
+    }
+
+    const handleCompleteTranscribing = ({ json, peopleToIdentify }: { json: AwsTranscribeJobJson, peopleToIdentify: Speaker[]}) => {
+        setTranscribeJobJSON(json)
+        setSpeakersToIdentify(peopleToIdentify)
+        setProcessState("identify")
     }
 
     const handleFinishIdentifying = (replacementSpeakers: Replacement[]) => {
@@ -168,7 +86,6 @@ export default function Test() {
         } else {
             setError("Somehow I don't have the transcribe JSON")
         }
-
     }
 
     if (error !== null) {
@@ -176,33 +93,27 @@ export default function Test() {
     }
 
     if (processState === "start") {
-        return (
-            <GettingStarted onFinishRecording={upload} />
-        )
+        return <GettingStarted onFinishRecording={upload} />
     }
 
     if (processState === "uploading" && blob) {
-        return <Uploading blob={blob.blob} onComplete={transcribe} onError={setError} />
+        return <Uploading blob={blob.blob} onComplete={(filename) => {
+            setTranscribeJob(filename)
+            setProcessState("transcribing")
+        }} onError={setError} />
     }
 
-    if (processState === "transcribing" || processState === "polling") {
-        return <Transcribe />
+    if (processState === "transcribing" && transcribeJob) {
+        return <Transcribe blobUrl={blob?.blobUrl || ''} filename={transcribeJob} onComplete={handleCompleteTranscribing} />
     }
 
     if (processState === "identify") {
         return <IdentifySpeakers onFinish={handleFinishIdentifying} speakers={speakersToIdentify} />
     }
 
-    return (
-        <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-            <div className="flex columns-2">
-                <div>
-                    {transcribeText}
-                </div>
-                <div>
-                    {summary}
-                </div>
-            </div>
-        </div>
-    );
+    if (processState === "summarizing" || processState === "done") {
+        return <Summarize textToSummarize={transcribeText} onComplete={handleCompleteSummarizing} />
+    }
+
+    return `Woah am I missing a state? ${processState}`
 }

@@ -1,6 +1,5 @@
-import {AudioRecorder} from "react-audio-voice-recorder";
-import React, {useEffect} from "react";
-import {UploadResponse} from "~/routes/upload";
+import React, {useCallback, useEffect, useRef} from "react";
+import type {UploadResponse} from "~/routes/upload";
 
 type UploadingProps = {
     blob: Blob,
@@ -9,8 +8,9 @@ type UploadingProps = {
 }
 
 export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
+    const ref = useRef(false)
 
-    const upload = async(blob: Blob) => {
+    const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
         formDataUpload.set("audioBlob", blob, "audio.wav");
 
@@ -31,11 +31,14 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
         } catch(e) {
             onError("Failed on uploading to AWS")
         }
-    }
+    },[onComplete, onError])
 
     useEffect(() => {
-        upload(blob)
-    }, [blob])
+        if (!ref.current) {
+            ref.current = true
+            upload(blob)
+        }
+    }, [upload, blob])
 
     return <div className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">

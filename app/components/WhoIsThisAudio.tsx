@@ -17,7 +17,7 @@ export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel 
         }
     }
 
-    return <>
+    return <tr>
         <td>
             <audio id={blobUrl}
                    controls
@@ -31,5 +31,5 @@ export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel 
             <input type="text" placeholder="Speaker name" className="input input-bordered w-full max-w-xs"
                    defaultValue={speakerLabel} onBlur={(e) => onChange(speakerLabel, e.target.value)}/>
         </td>
-    </>
+    </tr>
 }
