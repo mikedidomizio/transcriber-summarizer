@@ -22,7 +22,7 @@ export default function Test() {
     useEffect(() => {
         if (pollingState === "polling" && transcribeJob) {
             let interval  = setInterval(async() => {
-                await pollTranscribeJon(transcribeJob)
+                await pollTranscribeJob(transcribeJob)
             }, 3000)
 
             return () => {
@@ -76,7 +76,7 @@ export default function Test() {
         }
     }
 
-    const pollTranscribeJon = async(jobName: string) => {
+    const pollTranscribeJob = async(jobName: string) => {
         const formDataPollingTranscribeJob = new FormData()
         formDataPollingTranscribeJob.set("jobName", jobName)
 
