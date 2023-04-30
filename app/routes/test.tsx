@@ -147,12 +147,14 @@ export default function Test() {
             <AudioRecorder onRecordingComplete={upload} />
             <>{audioFiles.map(i => document.body.append(i))}</>
             {pollingState}
-
-            <br/>
-            {transcribeText}
-
-            <br/>
-            {summary}
+            <div className="flex columns-2">
+                <div>
+                    {transcribeText}
+                </div>
+                <div>
+                    {summary}
+                </div>
+            </div>
         </div>
     );
 }
