@@ -1,26 +1,35 @@
 import type {V2_MetaFunction} from "@remix-run/node";
 import {AudioRecorder} from "react-audio-voice-recorder";
 
-import React, {useEffect, useState} from "react";
+import React, {useEffect, useMemo, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
 import type {TranscribeResponse} from "~/routes/transcribe";
 import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
+import {WhoIsThisAudio} from "~/components/whoIsThisAudio";
+import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "New Remix App" }];
 };
 
+type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
+
 export default function Test() {
-    const [pollingState, setTranscribeState] = useState<"uploading" | "transcribing" | "polling" | "getText" | "summarizing" | "done" | "error" | null>(null)
-    const [audioFiles, setAudioFiles] = useState<HTMLAudioElement[]>([])
+
+    const [blobUrl, setBlobUrl] = useState<string | null>(null)
+    const [processState, setProcessState] = useState<"finishRecording" | "uploading" | "transcribing" | "polling" | "getText" | "identify" | "summarizing" | "done" | "error" | null>(null)
+    const [audioFiles, setAudioFiles] = useState<string[]>([])
+
+    const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
+
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
+    const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson>(null)
     const [transcribeText, setTranscribeText] = useState("")
     const [summary, setSummary] = useState("")
 
-
     useEffect(() => {
-        if (pollingState === "polling" && transcribeJob) {
+        if (processState === "polling" && transcribeJob) {
             let interval  = setInterval(async() => {
                 await pollTranscribeJob(transcribeJob)
             }, 3000)
@@ -29,10 +38,23 @@ export default function Test() {
                 clearInterval(interval)
             }
         }
-    }, [pollingState])
+    }, [processState])
+
+    useEffect(() => {
+        return () => {
+            // release the resources
+            audioFiles.forEach(i => URL.revokeObjectURL(i))
+        }
+    }, [audioFiles])
+
+    const finishRecording = async (blob: Blob) => {
+        setProcessState("finishRecording")
+        setBlobUrl(URL.createObjectURL(blob))
+        await upload(blob)
+    }
 
     const upload = async(blob: Blob) => {
-        setTranscribeState("uploading")
+        setProcessState("uploading")
         const formDataUpload  = new FormData();
         formDataUpload.set("audioBlob", blob, "audio.wav");
 
@@ -45,18 +67,18 @@ export default function Test() {
             const uploadResponse: UploadResponse = await uploadRes.json()
 
             if (!uploadResponse.filename) {
-                setTranscribeState("error")
+                setProcessState("error")
                 return
             }
 
             return transcribe(uploadResponse.filename)
         } catch(e) {
-            setTranscribeState("error")
+            setProcessState("error")
         }
     }
 
     const transcribe = async(filename: string) => {
-        setTranscribeState("transcribing")
+        setProcessState("transcribing")
 
         const formDataTranscribe = new FormData()
         formDataTranscribe.set("s3Filename", filename)
@@ -70,9 +92,9 @@ export default function Test() {
 
         if (transcribeResponse.TranscriptionJob?.TranscriptionJobName) {
             setTranscribeJob(transcribeResponse.TranscriptionJob?.TranscriptionJobName)
-            setTranscribeState("polling")
+            setProcessState("polling")
         } else {
-            setTranscribeState("error")
+            setProcessState("error")
         }
     }
 
@@ -92,13 +114,13 @@ export default function Test() {
                 setTranscribeJob(null)
                 await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
             } else {
-                setTranscribeState("error")
+                setProcessState("error")
             }
         }
     }
 
     const getText = async(transcriptionJobFileUri: string) => {
-        setTranscribeState("getText")
+        setProcessState("getText")
         const formDataGetText = new FormData()
         formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
 
@@ -109,15 +131,29 @@ export default function Test() {
 
         const json = await res.json()
 
-        const summarizedText = separateBySpeaker(json)
+        setTranscribeJobJSON(json)
+        return identifySpeakers(json)
+    }
 
-        setTranscribeText(summarizedText)
+    const identifySpeakers = async(json: AwsTranscribeJobJson) => {
+        if (json.results.speaker_labels.segments) {
+            setProcessState("identify")
+            const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map(i => {
+                return {
+                    blobUrl: blobUrl || "",
+                    speakerLabel: i.speaker_label,
+                    startTime: i.start_time
+                }
+            })
 
-        await summarizing(summarizedText)
+            setSpeakersToIdentify(peopleToIdentity)
+        } else {
+            setProcessState("error")
+        }
     }
 
     const summarizing = async(summarizedTextForOpenAI: string) => {
-        setTranscribeState("summarizing")
+        setProcessState("summarizing")
 
         const formDataSummarizing = new FormData()
         formDataSummarizing.set("summarizedTextForOpenAI", summarizedTextForOpenAI)
@@ -130,24 +166,51 @@ export default function Test() {
         const json = await res.json()
 
         setSummary(json as string)
-        setTranscribeState("done")
+        setProcessState("done")
     }
 
-    //     const url = URL.createObjectURL(blob);
-    //     const audio = document.createElement("audio");
-    //     audio.src = url;
-    //     audio.controls = true;
-    //
-    //     setAudioFiles((existingAudioFiles) => [
-    //         // ...existingAudioFiles,
-    //         audio
-    //     ])
+
+    const handleChange = (oldSpeakerLabel: string, newSpeakerLabel: string) => {
+        const speaker = speakersToIdentify.find(i => i.speakerLabel)
+
+        if (speaker) {
+            speaker.speakerLabel = newSpeakerLabel
+            setSpeakersToIdentify(speakersToIdentify)
+
+            // update the AWS JSON with the new speaker label
+            setTranscribeJobJSON((json) => {
+                json.results.items.forEach((i ,index) => {
+                    json.results.items[index] = {
+                        ...i,
+                        speaker_label: newSpeakerLabel
+                    }
+                })
+
+                return json
+            })
+        }
+    }
+
+    const handleFinishIdentifying = () => {
+        const summarizedText = separateBySpeaker(transcribeJobJSON)
+        setTranscribeText(summarizedText)
+        return summarizing(summarizedText)
+    }
 
     return (
         <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-            <AudioRecorder onRecordingComplete={upload} />
-            <>{audioFiles.map(i => document.body.append(i))}</>
-            {pollingState}
+            <AudioRecorder onRecordingComplete={finishRecording} />
+
+            {processState}
+
+            {processState === "identify" && speakersToIdentify.length ?
+                <>{speakersToIdentify.map(({ blobUrl, speakerLabel, startTime }) => (
+                    <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
+                ))}
+
+                    <input type="button" onClick={handleFinishIdentifying} value="Finished Identifying" />
+                </>
+            : null}
 
             <div className="flex columns-2">
                 <div>
