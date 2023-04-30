@@ -37,6 +37,11 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
         Media: {
             MediaFileUri: s3Location,
         },
+        Settings: {
+            // todo this should be a parameter that is supplied
+            MaxSpeakerLabels: 2,
+            ShowSpeakerLabels: true,
+        }
     }
 
     const command = new StartTranscriptionJobCommand(input);

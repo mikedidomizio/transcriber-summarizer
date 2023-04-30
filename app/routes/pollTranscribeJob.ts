@@ -7,7 +7,12 @@ import {
 import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 import fs from "fs";
 import {UploadResponse} from "~/routes/upload";
-import {ListTranscriptionJobsCommand, StartTranscriptionJobCommand, TranscribeClient} from "@aws-sdk/client-transcribe";
+import {
+    GetTranscriptionJobCommand,
+    ListTranscriptionJobsCommand,
+    StartTranscriptionJobCommand,
+    TranscribeClient
+} from "@aws-sdk/client-transcribe";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
@@ -24,18 +29,17 @@ export const action = async ({request}: ActionArgs): Promise<any> => {
         }
     }
 
+    const formData = await request.formData();
+    const jobName = formData.get('jobName') as string
+
     const client = new TranscribeClient(config);
-    const params = {
-        JobNameContains: "KEYWORD", // Not required. Returns only transcription
-        // job names containing this string
+    const input = {
+        TranscriptionJobName: jobName,
     };
 
     try {
-        const data = await client.send(
-            new ListTranscriptionJobsCommand(params)
-        );
-        console.log("Success", data.TranscriptionJobSummaries);
-        return data; // For unit tests.
+        const command = new GetTranscriptionJobCommand(input)
+        return client.send(command)
     } catch (err) {
         console.log("Error", err);
     }

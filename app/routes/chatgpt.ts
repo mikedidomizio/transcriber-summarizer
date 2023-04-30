@@ -29,15 +29,27 @@ export const action = async ({request}: ActionArgs) => {
     const configuration = new Configuration({
         apiKey: OPENAI_API_KEY,
     });
+
+    const formData = await request.formData();
+    const summarizedTextForOpenAI = formData.get('summarizedTextForOpenAI') as string
+
+    const openAiPrompt = `Summarize the following discussion:
+        ${summarizedTextForOpenAI}
+    `
+
+
+    console.log('prompt to send', openAiPrompt)
+
     const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
         model: "text-davinci-003",
-        prompt: "Say this is a test",
+        prompt: openAiPrompt,
         temperature: 0,
-        max_tokens: 7,
+        // todo max tokens can't be this low :)
+        max_tokens: 50,
     });
 
-    console.log(response)
+    console.log('response', response.data.choices[0].text)
 
-    return null
+    return response.data.choices[0].text
 }

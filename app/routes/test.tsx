@@ -4,21 +4,26 @@ import {AudioRecorder} from "react-audio-voice-recorder";
 import React, {useEffect, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
 import type {TranscribeResponse} from "~/routes/transcribe";
+import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
+import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "New Remix App" }];
 };
 
 export default function Test() {
-    const [pollingState, setTranscribeState] = useState<"uploading" | "transcribing" | "polling" | "summarizing" | "error" | null>(null)
+    const [pollingState, setTranscribeState] = useState<"uploading" | "transcribing" | "polling" | "getText" | "summarizing" | "error" | null>(null)
     const [audioFiles, setAudioFiles] = useState<HTMLAudioElement[]>([])
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
+    const [transcribeText, setTranscribeText] = useState("")
+    const [summary, setSummary] = useState("")
+
 
     useEffect(() => {
         if (pollingState === "polling" && transcribeJob) {
             let interval  = setInterval(async() => {
                 await pollTranscribeJon(transcribeJob)
-            }, 5000)
+            }, 3000)
 
             return () => {
                 clearInterval(interval)
@@ -80,14 +85,51 @@ export default function Test() {
             body: formDataPollingTranscribeJob
         });
 
-        const pollTranscribePollResponse = await pollTranscribePollRes.json()
+        const pollTranscribePollResponse: GetTranscriptionJobResponse = await pollTranscribePollRes.json()
 
-        // todo I'm not sure what to find here for actual status
-        console.log('status', pollTranscribePollResponse)
+        if (pollTranscribePollResponse.TranscriptionJob?.TranscriptionJobStatus === "COMPLETED") {
+            if (pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri) {
+                setTranscribeJob(null)
+                await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
+            } else {
+                setTranscribeState("error")
+            }
+        }
+    }
 
-        // ensures that the interval is cleared
-        setTranscribeJob(null)
+    const getText = async(transcriptionJobFileUri: string) => {
+        setTranscribeState("getText")
+        const formDataGetText = new FormData()
+        formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
+
+        const res = await fetch('./getText', {
+            method: 'POST',
+            body: formDataGetText
+        });
+
+        const json = await res.json()
+
+        const summarizedText = separateBySpeaker(json)
+
+        setTranscribeText(summarizedText)
+
+        await summarizing(summarizedText)
+    }
+
+    const summarizing = async(summarizedTextForOpenAI: string) => {
         setTranscribeState("summarizing")
+
+        const formDataSummarizing = new FormData()
+        formDataSummarizing.set("summarizedTextForOpenAI", summarizedTextForOpenAI)
+
+        const res = await fetch('./chatgpt', {
+            method: 'POST',
+            body: formDataSummarizing
+        });
+
+        const json = await res.json()
+
+        setSummary(json as string)
     }
 
     //     const url = URL.createObjectURL(blob);
@@ -105,6 +147,12 @@ export default function Test() {
             <AudioRecorder onRecordingComplete={upload} />
             <>{audioFiles.map(i => document.body.append(i))}</>
             {pollingState}
+
+            <br/>
+            {transcribeText}
+
+            <br/>
+            {summary}
         </div>
     );
 }
