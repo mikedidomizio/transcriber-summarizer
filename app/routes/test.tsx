@@ -1,23 +1,21 @@
 import type {V2_MetaFunction} from "@remix-run/node";
-import {AudioRecorder} from "react-audio-voice-recorder";
 
-import React, {useEffect, useMemo, useState} from "react";
-import type {UploadResponse} from "~/routes/upload";
+import React, {useEffect, useState} from "react";
 import type {TranscribeResponse} from "~/routes/transcribe";
 import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
-import {WhoIsThisAudio} from "~/components/WhoIsThisAudio";
-import {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
+import type {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
 import {Error} from "~/components/Error";
 import {Uploading} from "~/components/Uploading";
 import {Transcribe} from "~/components/Transcribe";
+import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
+import {IdentifySpeakers, Replacements} from "~/components/IdentifySpeakers";
+import {Segment} from "~/lib/aws-transcribe.types";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
 };
-
-type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
 
 export default function Test() {
     const [blob, setBlob] = useState<{ blob: Blob, blobUrl: string } | null>(null)
@@ -112,24 +110,17 @@ export default function Test() {
         const json = await res.json()
 
         setTranscribeJobJSON(json)
-        return identifySpeakers(json)
-    }
 
-    const identifySpeakers = async(json: AwsTranscribeJobJson) => {
-        if (json.results.speaker_labels.segments) {
-            setProcessState("identify")
-            const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map(i => {
-                return {
-                    blobUrl: blob?.blobUrl || "",
-                    speakerLabel: i.speaker_label,
-                    startTime: i.start_time
-                }
-            })
+        const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map((i: Segment) => {
+            return {
+                blobUrl: blob?.blobUrl || "",
+                speakerLabel: i.speaker_label,
+                startTime: i.start_time
+            }
+        })
 
-            setSpeakersToIdentify(peopleToIdentity)
-        } else {
-            setError("Failed when updating the object of identifying speakers")
-        }
+        setSpeakersToIdentify(peopleToIdentity)
+        setProcessState("identify")
     }
 
     const summarizing = async(summarizedTextForOpenAI: string) => {
@@ -149,30 +140,28 @@ export default function Test() {
         setProcessState("done")
     }
 
-
-    const handleChange = (oldSpeakerLabel: string, newSpeakerLabel: string) => {
-        const speaker = speakersToIdentify.find(i => i.speakerLabel)
-
-        if (speaker) {
-            speaker.speakerLabel = newSpeakerLabel
-            setSpeakersToIdentify(speakersToIdentify)
-
-            // update the AWS JSON with the new speaker label
-            setTranscribeJobJSON((json) => {
-                json.results.items.forEach((i ,index) => {
-                    json.results.items[index] = {
-                        ...i,
-                        speaker_label: newSpeakerLabel
-                    }
-                })
-
-                return json
-            })
-        }
-    }
-
-    const handleFinishIdentifying = () => {
+    const handleFinishIdentifying = (replacementSpeakers: Replacement[]) => {
         if (transcribeJobJSON) {
+            setTranscribeJobJSON((json) => {
+                if (json) {
+                    json.results.items.forEach((i ,index) => {
+                        // todo not very optimized
+                        const replacement = replacementSpeakers.find(replacement => replacement.oldValue === i.speaker_label)
+
+                        if (replacement) {
+                            json.results.items[index] = {
+                                ...i,
+                                speaker_label: replacement.newValue
+                            }
+                        }
+                    })
+
+                    return json
+                }
+
+                return null
+            })
+
             const summarizedText = separateBySpeaker(transcribeJobJSON)
             setTranscribeText(summarizedText)
             return summarizing(summarizedText)
@@ -200,20 +189,12 @@ export default function Test() {
         return <Transcribe />
     }
 
+    if (processState === "identify") {
+        return <IdentifySpeakers onFinish={handleFinishIdentifying} speakers={speakersToIdentify} />
+    }
+
     return (
         <div style={{ fontFamily: "system-ui, sans-serif", lineHeight: "1.4" }}>
-            <AudioRecorder onRecordingComplete={upload} />
-
-            {processState}
-
-            {processState === "identify" && speakersToIdentify.length ?
-                <>{speakersToIdentify.map(({ blobUrl, speakerLabel, startTime }) => (
-                    <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
-                ))}
-                    <input type="button" onClick={handleFinishIdentifying} value="Finished Identifying" />
-                </>
-            : null}
-
             <div className="flex columns-2">
                 <div>
                     {transcribeText}
