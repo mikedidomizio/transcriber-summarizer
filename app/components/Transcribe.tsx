@@ -2,7 +2,6 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 import type {Speaker} from "~/components/IdentifySpeakers";
 import type {Segment} from "~/lib/aws-transcribe.types";
-import type {TranscribeResponse} from "~/routes/transcribe";
 
 type TranscribeProps = {
     blobUrl: string,
@@ -20,11 +19,10 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
     const fetchNumberOfResults = useCallback(async() => {
         const response = await fetch('./numberOfTimes')
         const json = await response.json()
-
         setNumberOfTimes(json.numberOfTimes)
     }, [])
 
-    const transcribe = async() => {
+    const transcribe = useCallback(async() => {
         const formDataTranscribe = new FormData()
         formDataTranscribe.set("s3Filename", filename)
 
@@ -33,15 +31,14 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
             body: formDataTranscribe,
         })
 
-        const transcribeResponse: TranscribeResponse = await transcribeRes.json()
+        const transcribeResponse = await transcribeRes.json()
 
         if (transcribeResponse.TranscriptionJob?.TranscriptionJobName) {
             setTranscribeJob(transcribeResponse.TranscriptionJob?.TranscriptionJobName)
         }
 
         setIsPolling(true)
-    }
-
+    }, [filename])
 
     useEffect(() => {
         if (!ref.current) {
@@ -49,10 +46,9 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
             fetchNumberOfResults()
             transcribe()
         }
-    }, [fetchNumberOfResults])
+    }, [fetchNumberOfResults, transcribe])
 
-
-    const getText = async(transcriptionJobFileUri: string) => {
+    const getText = useCallback(async(transcriptionJobFileUri: string) => {
         const formDataGetText = new FormData()
         formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
 
@@ -75,10 +71,9 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
             json,
             peopleToIdentify: peopleToIdentity
         })
-    }
+    }, [blobUrl, onComplete])
 
-
-    const pollTranscribeJob = async(jobName: string) => {
+    const pollTranscribeJob = useCallback(async(jobName: string) => {
         const formDataPollingTranscribeJob = new FormData()
         formDataPollingTranscribeJob.set("jobName", jobName)
 
@@ -95,11 +90,12 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
                 await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
             }
         }
-    }
+    }, [getText])
 
     useEffect(() => {
         if (isPolling && transcribeJob) {
             let interval  = setInterval(async() => {
+                setNumberOfTimesPolled((numberOfTimesPolled => numberOfTimesPolled + 1))
                 await pollTranscribeJob(transcribeJob)
             }, 3000)
 
@@ -107,7 +103,7 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
                 clearInterval(interval)
             }
         }
-    }, [isPolling, transcribeJob])
+    }, [isPolling, pollTranscribeJob, transcribeJob])
 
     return <div className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">
@@ -123,8 +119,11 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
                     <div className="stat-value">{numberOfTimes > -1 ? numberOfTimes : '...' }</div>
                     <div className="stat-desc">times</div>
                 </div>
-                {new Array().fill(numberOfTimesPolled).map(i => '.')}
             </div>
+
+            {numberOfTimesPolled > 0 ?<div>
+                {new Array(numberOfTimesPolled).fill(5).map((i, index) => <span key={index}>.</span>)}
+            </div> : null}
         </div>
     </div>
     </div>

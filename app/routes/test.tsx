@@ -1,8 +1,6 @@
 import type {V2_MetaFunction} from "@remix-run/node";
 
 import React, {useEffect, useState} from "react";
-import type {TranscribeResponse} from "~/routes/transcribe";
-import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
 import type {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
@@ -11,7 +9,6 @@ import {Uploading} from "~/components/Uploading";
 import {Transcribe} from "~/components/Transcribe";
 import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
 import {IdentifySpeakers} from "~/components/IdentifySpeakers";
-import type {Segment} from "~/lib/aws-transcribe.types";
 import {Summarize} from "~/components/Summarize";
 
 export const meta: V2_MetaFunction = () => {

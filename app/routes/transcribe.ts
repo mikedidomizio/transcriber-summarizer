@@ -1,7 +1,9 @@
+import type {
+    StartTranscriptionJobCommandOutput
+} from "@aws-sdk/client-transcribe";
 import {
     TranscribeClient,
-    StartTranscriptionJobCommand,
-    StartTranscriptionJobCommandOutput
+    StartTranscriptionJobCommand
 } from "@aws-sdk/client-transcribe";
 import type {ActionArgs} from "@remix-run/node";
 
@@ -10,8 +12,6 @@ const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
-
-export type TranscribeResponse = StartTranscriptionJobCommandOutput
 
 export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJobCommandOutput> => {
     const config = {

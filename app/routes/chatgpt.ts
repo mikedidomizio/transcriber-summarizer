@@ -2,23 +2,6 @@ import type {ActionArgs} from "@remix-run/node";
 
 const { Configuration, OpenAIApi } = require("openai");
 
-export type ChatGPTAgent = "user" | "system";
-
-// Define ChatGPTMessage interface
-interface ChatGPTMessage {
-    role: ChatGPTAgent;
-    content: string;
-}
-
-// Define promptPayload interface
-interface promptPayload {
-    model: string;
-    messages: ChatGPTMessage[];
-    temperature: number;
-    max_tokens: number;
-}
-
-
 const {  OPENAI_API_KEY} = process.env;
 
 if (!OPENAI_API_KEY) {
@@ -37,7 +20,6 @@ export const action = async ({request}: ActionArgs) => {
         ${summarizedTextForOpenAI}
     `
 
-
     console.log('prompt to send', openAiPrompt)
 
     const openai = new OpenAIApi(configuration);
@@ -45,11 +27,8 @@ export const action = async ({request}: ActionArgs) => {
         model: "text-davinci-003",
         prompt: openAiPrompt,
         temperature: 0,
-        // todo max tokens can't be this low :)
-        max_tokens: 50,
+        max_tokens: 500,
     });
-
-    console.log('response', response.data.choices[0].text)
 
     return response.data.choices[0].text
 }

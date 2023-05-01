@@ -28,18 +28,18 @@ export const Summarize = ({ onComplete, textToSummarize }: SummarizeProps) => {
             ref.current = true
             makeOpenAiRequest()
         }
-    }, [makeOpenAiRequest])
+    }, [makeOpenAiRequest, textToSummarize])
 
     return <div className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">{summarizedText ? "Summarized!" : "Summarizing"}</h1>
-                {summarizedText ? <p>
+                {summarizedText ? <p className="my-4">
                     {summarizedText}
                 </p> : null}
                 {textToSummarize.length === 0 ? "I only work when passed in a string to analyze" : null}
 
-                <button className="btn btn-primary mt-4" onClick={() => window.location.reload()}>Start over</button>
+                {summarizedText ? <button className="btn btn-primary mt-4" onClick={() => window.location.reload()}>Start over</button> : null}
             </div>
         </div>
     </div>

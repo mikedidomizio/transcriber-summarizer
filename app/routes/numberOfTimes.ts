@@ -1,10 +1,8 @@
-import type {
-    ActionArgs,
-} from "@remix-run/node";
 import {
     json,
 } from "@remix-run/node";
-import {GetObjectCommand, PutObjectCommand, PutObjectCommandOutput, S3Client} from "@aws-sdk/client-s3";
+import type { PutObjectCommandOutput} from "@aws-sdk/client-s3";
+import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
@@ -52,7 +50,7 @@ const updateFile = async(num: number): Promise<PutObjectCommandOutput> => {
 /**
  * Fetches the number of transcribes that have been performed
  */
-export const loader = async ({request}: ActionArgs): Promise<any> => {
+export const loader = async (): Promise<any> => {
     try {
         const numberOfTimes = await fetchFile()
         if (typeof numberOfTimes === "number") {
@@ -84,10 +82,4 @@ export const loader = async ({request}: ActionArgs): Promise<any> => {
             }
         );
     }
-
-    return json(
-        {
-            status: 520,
-        }
-    );
 }

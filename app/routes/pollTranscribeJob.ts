@@ -1,16 +1,9 @@
-import {
-    ActionArgs, json,
-    unstable_composeUploadHandlers,
-    unstable_createFileUploadHandler,
-    unstable_createMemoryUploadHandler, unstable_parseMultipartFormData
+import type {
+    ActionArgs,
 } from "@remix-run/node";
-import {PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
-import fs from "fs";
-import {UploadResponse} from "~/routes/upload";
+import type { GetTranscriptionJobCommandOutput} from "@aws-sdk/client-transcribe";
 import {
     GetTranscriptionJobCommand,
-    ListTranscriptionJobsCommand,
-    StartTranscriptionJobCommand,
     TranscribeClient
 } from "@aws-sdk/client-transcribe";
 
@@ -20,7 +13,7 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
-export const action = async ({request}: ActionArgs): Promise<any> => {
+export const action = async ({request}: ActionArgs): Promise<GetTranscriptionJobCommandOutput> => {
     const config = {
         region: 'us-east-1',
         credentials:{
@@ -37,10 +30,6 @@ export const action = async ({request}: ActionArgs): Promise<any> => {
         TranscriptionJobName: jobName,
     };
 
-    try {
-        const command = new GetTranscriptionJobCommand(input)
-        return client.send(command)
-    } catch (err) {
-        console.log("Error", err);
-    }
+    const command = new GetTranscriptionJobCommand(input)
+    return client.send(command)
 }
