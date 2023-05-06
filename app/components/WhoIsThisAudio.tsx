@@ -1,4 +1,4 @@
-import React from "react";
+import React, {useRef} from "react";
 
 type WhoIsThisAudioProps = {
     blobUrl: string,
@@ -8,19 +8,17 @@ type WhoIsThisAudioProps = {
 }
 
 export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel }: WhoIsThisAudioProps) => {
-    const id = `${speakerLabel}-${startTime}`
-    const setCurrentTime = () => {
-        // todo hate using document here
-        const audioElement = document.getElementById(id)
+    const ref = useRef<HTMLAudioElement>(null)
 
-        if (audioElement) {
-            (audioElement as HTMLAudioElement).currentTime = startTime
+    const setCurrentTime = () => {
+        if (ref.current) {
+            ref.current.currentTime = startTime
         }
     }
 
     return <tr data-testid="whoIsThisRow">
         <td>
-            <audio id={id}
+            <audio ref={ref}
                    controls
                    preload="auto"
                    onPlay={setCurrentTime}
