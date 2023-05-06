@@ -30,8 +30,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
         uploadHandler
     );
 
-    // todo prefer not to cast as
-    const audioBlob = formData.get('audioBlob') as FormDataEntryValue
+    const audioBlob  = formData.get('audioBlob')
 
     const client = new S3Client({
         region: 'us-east-1',
@@ -58,13 +57,13 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
             {
                 "filename": newFileNameWithTimestamp,
                 status: 201,
-            } as UploadResponse
+            }
         );
     } catch (err) {
         return json(
             {
                 status: 520,
-            } as UploadResponse
+            }
         );
     }
 }
