@@ -20,8 +20,6 @@ export const action = async ({request}: ActionArgs) => {
         ${summarizedTextForOpenAI}
     `
 
-    console.log('prompt to send', openAiPrompt)
-
     const openai = new OpenAIApi(configuration);
     const response = await openai.createCompletion({
         model: "text-davinci-003",
