@@ -26,9 +26,9 @@ const separateBySpeakerParagraph = (json: AwsTranscribeJobJson): string => {
         if (word === '.') {
             acc += `${cur.alternatives[0].content}`
         } else {
-            acc += ` ${cur.alternatives[0].content}`
+            acc += `${cur.alternatives[0].content} `
         }
 
         return acc
-    }, '')
+    }, '') + '"'
 }

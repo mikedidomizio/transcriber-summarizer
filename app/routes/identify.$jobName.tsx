@@ -17,7 +17,7 @@ export default function JobName() {
   const { speakers } = useTranscribeJob(jobName)
 
   if (speakers !== null) {
-    return <IdentifySpeakers speakers={speakers} onFinish={() => {}} />
+    return <IdentifySpeakers blobUrl="http://" speakers={speakers} onFinish={() => {}} />
   }
 
   return <div>{jobName}</div>
