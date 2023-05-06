@@ -13,7 +13,7 @@ export const Summarize = ({ onComplete, textToSummarize }: SummarizeProps) => {
         const formDataSummarizing = new FormData()
         formDataSummarizing.set("summarizedTextForOpenAI", textToSummarize)
 
-        const res = await fetch('./chatgpt', {
+        const res = await fetch('/chatgpt', {
             method: 'POST',
             body: formDataSummarizing
         });
