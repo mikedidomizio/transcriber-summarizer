@@ -6,6 +6,7 @@ import {
     StartTranscriptionJobCommand
 } from "@aws-sdk/client-transcribe";
 import type {ActionArgs} from "@remix-run/node";
+import {redirect} from "@remix-run/router";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
@@ -13,7 +14,7 @@ if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
-export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJobCommandOutput> => {
+export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJobCommandOutput | any> => {
     const config = {
         region: 'us-east-1',
         credentials:{
@@ -27,8 +28,6 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
 
     const client = new TranscribeClient(config);
     const s3Location = `s3://${AWS_S3_BUCKET}/${s3Filename}`
-
-    console.log('Attempt to transcribe S3 file:', s3Location)
 
     const input = {
         LanguageCode: 'en-US',

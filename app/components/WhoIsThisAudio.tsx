@@ -8,17 +8,19 @@ type WhoIsThisAudioProps = {
 }
 
 export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel }: WhoIsThisAudioProps) => {
+    const id = `${speakerLabel}-${startTime}`
     const setCurrentTime = () => {
-        const audioElement = document.getElementById(blobUrl)
+        // todo hate using document here
+        const audioElement = document.getElementById(id)
 
         if (audioElement) {
             (audioElement as HTMLAudioElement).currentTime = startTime
         }
     }
 
-    return <tr>
+    return <tr data-testid="whoIsThisRow">
         <td>
-            <audio id={blobUrl}
+            <audio id={id}
                    controls
                    preload="auto"
                    onPlay={setCurrentTime}

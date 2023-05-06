@@ -1,7 +1,6 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
-import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
+import {useTranscribeJob} from "~/hooks/useTranscribeJob";
 import type {Speaker} from "~/components/IdentifySpeakers";
-import type {Segment} from "~/lib/aws-transcribe.types";
 
 type TranscribeProps = {
     blobUrl: string,
@@ -10,11 +9,11 @@ type TranscribeProps = {
 }
 
 export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) => {
-    const [numberOfTimesPolled, setNumberOfTimesPolled] = useState(0)
-    const [isPolling, setIsPolling] = useState(false)
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
     const [numberOfTimes, setNumberOfTimes] = useState(-1)
     const ref = useRef(false)
+    // const navigate = useNavigate();
+    const { speakers, numberOfTimesPolled, getAWSResponse } = useTranscribeJob(transcribeJob || '')
 
     const fetchNumberOfResults = useCallback(async() => {
         const response = await fetch('./numberOfTimes')
@@ -22,7 +21,7 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
         setNumberOfTimes(json.numberOfTimes)
     }, [])
 
-    const transcribe = useCallback(async() => {
+    const createTranscribeJob = useCallback(async() => {
         const formDataTranscribe = new FormData()
         formDataTranscribe.set("s3Filename", filename)
 
@@ -35,75 +34,26 @@ export const Transcribe = ({ blobUrl, filename, onComplete }: TranscribeProps) =
 
         if (transcribeResponse.TranscriptionJob?.TranscriptionJobName) {
             setTranscribeJob(transcribeResponse.TranscriptionJob?.TranscriptionJobName)
+            // navigate(`/identify/${transcribeResponse.TranscriptionJob?.TranscriptionJobName}`)
         }
-
-        setIsPolling(true)
     }, [filename])
+
+    useEffect(() => {
+        if (speakers !== null) {
+            onComplete({
+                    peopleToIdentify: speakers,
+                    json: getAWSResponse
+                })
+        }
+    }, [speakers, transcribeJob])
 
     useEffect(() => {
         if (!ref.current) {
             ref.current = true
             fetchNumberOfResults()
-            transcribe()
+            createTranscribeJob()
         }
-    }, [fetchNumberOfResults, transcribe])
-
-    const getText = useCallback(async(transcriptionJobFileUri: string) => {
-        const formDataGetText = new FormData()
-        formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
-
-        const res = await fetch('./getText', {
-            method: 'POST',
-            body: formDataGetText
-        });
-
-        const json = await res.json()
-
-        const peopleToIdentity: Speaker[] = json.results.speaker_labels.segments.map((i: Segment) => {
-            return {
-                blobUrl: blobUrl,
-                speakerLabel: i.speaker_label,
-                startTime: i.start_time
-            }
-        })
-
-        onComplete({
-            json,
-            peopleToIdentify: peopleToIdentity
-        })
-    }, [blobUrl, onComplete])
-
-    const pollTranscribeJob = useCallback(async(jobName: string) => {
-        const formDataPollingTranscribeJob = new FormData()
-        formDataPollingTranscribeJob.set("jobName", jobName)
-
-        const pollTranscribePollRes = await fetch('./pollTranscribeJob', {
-            method: 'POST',
-            body: formDataPollingTranscribeJob
-        });
-
-        const pollTranscribePollResponse: GetTranscriptionJobResponse = await pollTranscribePollRes.json()
-
-        if (pollTranscribePollResponse.TranscriptionJob?.TranscriptionJobStatus === "COMPLETED") {
-            if (pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri) {
-                setTranscribeJob(null)
-                await getText(pollTranscribePollResponse.TranscriptionJob.Transcript?.TranscriptFileUri)
-            }
-        }
-    }, [getText])
-
-    useEffect(() => {
-        if (isPolling && transcribeJob) {
-            let interval  = setInterval(async() => {
-                setNumberOfTimesPolled((numberOfTimesPolled => numberOfTimesPolled + 1))
-                await pollTranscribeJob(transcribeJob)
-            }, 3000)
-
-            return () => {
-                clearInterval(interval)
-            }
-        }
-    }, [isPolling, pollTranscribeJob, transcribeJob])
+    }, [fetchNumberOfResults, createTranscribeJob])
 
     return <div className="hero min-h-screen bg-base-200">
         <div className="hero-content text-center">

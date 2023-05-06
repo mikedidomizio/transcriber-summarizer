@@ -1,16 +1,17 @@
 import React, {useEffect, useState} from "react";
 import {WhoIsThisAudio} from "~/components/WhoIsThisAudio";
 
-export type Speaker = { blobUrl: string, startTime: string, speakerLabel: string }
+export type Speaker = { startTime: string, speakerLabel: string }
 
 export type Replacement = { oldValue: string, newValue: string }
 
 type IdentifySpeakersProps = {
+    blobUrl: string
     onFinish: (replacements: Replacement[]) => void
     speakers: Speaker[]
 }
 
-export const IdentifySpeakers = ({ onFinish, speakers }: IdentifySpeakersProps) => {
+export const IdentifySpeakers = ({ blobUrl, onFinish, speakers }: IdentifySpeakersProps) => {
     const [speakersState, setSpeakersState] = useState<Replacement[]>([])
 
     useEffect(() => {
@@ -42,7 +43,7 @@ export const IdentifySpeakers = ({ onFinish, speakers }: IdentifySpeakersProps) 
                             </tr>
                             </thead>
                             <tbody>
-                            {speakers.map(({ blobUrl, speakerLabel, startTime }) => (
+                            {speakers.map(({ speakerLabel, startTime }) => (
                                 <WhoIsThisAudio blobUrl={blobUrl} key={speakerLabel} onChange={handleChange} speakerLabel={speakerLabel} startTime={parseInt(startTime, 10)} />
                             ))}
                             </tbody>

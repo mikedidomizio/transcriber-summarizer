@@ -10,6 +10,7 @@ import {Transcribe} from "~/components/Transcribe";
 import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
 import {IdentifySpeakers} from "~/components/IdentifySpeakers";
 import {Summarize} from "~/components/Summarize";
+import {redirect} from "@remix-run/node";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
@@ -56,7 +57,9 @@ export default function Test() {
     }
 
     const handleFinishIdentifying = (replacementSpeakers: Replacement[]) => {
+
         if (transcribeJobJSON) {
+            // todo setting the state, while also updating the state right after?
             setTranscribeJobJSON((json) => {
                 if (json) {
                     json.results.items.forEach((i ,index) => {
@@ -105,7 +108,7 @@ export default function Test() {
     }
 
     if (processState === "identify") {
-        return <IdentifySpeakers onFinish={handleFinishIdentifying} speakers={speakersToIdentify} />
+        return <IdentifySpeakers blobUrl={blob?.blobUrl || ''} onFinish={handleFinishIdentifying} speakers={speakersToIdentify} />
     }
 
     if (processState === "summarizing" || processState === "done") {
