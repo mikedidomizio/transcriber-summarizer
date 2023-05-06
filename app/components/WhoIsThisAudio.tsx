@@ -9,10 +9,19 @@ type WhoIsThisAudioProps = {
 
 export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel }: WhoIsThisAudioProps) => {
     const ref = useRef<HTMLAudioElement>(null)
+    const initialLoadRef = useRef(false)
 
-    const setCurrentTime = () => {
+    const setCurrentTimeToStartTime = () => {
         if (ref.current) {
             ref.current.currentTime = startTime
+        }
+    }
+
+    // this is a separate function call to avoid re-rendering
+    const setCurrentTimeOnLoad = () => {
+        if (!initialLoadRef.current) {
+            initialLoadRef.current = true
+            setCurrentTimeToStartTime()
         }
     }
 
@@ -21,7 +30,8 @@ export const WhoIsThisAudio = ({ blobUrl, onChange, startTime = 0, speakerLabel 
             <audio ref={ref}
                    controls
                    preload="auto"
-                   onPlay={setCurrentTime}
+                   onCanPlay={setCurrentTimeOnLoad}
+                   onPlay={setCurrentTimeToStartTime}
                    src={blobUrl}
             >
             </audio>
