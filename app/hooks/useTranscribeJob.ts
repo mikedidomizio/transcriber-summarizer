@@ -1,7 +1,7 @@
 import {useCallback, useEffect, useState} from "react";
-import {Speaker} from "~/components/IdentifySpeakers";
-import {Segment} from "~/lib/aws-transcribe.types";
-import {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
+import type {Speaker} from "~/components/IdentifySpeakers";
+import type {Segment} from "~/lib/aws-transcribe.types";
+import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
 
 const getUniqueSpeakers = (speakers: Speaker[]): Speaker[] => {
   return speakers.filter((obj, index, arr) => {
@@ -67,7 +67,7 @@ export const useTranscribeJob = (jobName: string | undefined) => {
     }
 
     setNumberOfTimesPolled((num) => num + 1)
-  }, [])
+  }, [getText])
 
   useEffect(() => {
     if (isPolling && jobName) {
@@ -79,7 +79,7 @@ export const useTranscribeJob = (jobName: string | undefined) => {
         clearInterval(interval)
       }
     }
-  }, [isPolling, pollTranscribeJob])
+  }, [jobName, isPolling, pollTranscribeJob])
 
   return { speakers, numberOfTimesPolled, getAWSResponse }
 }

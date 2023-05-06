@@ -6,7 +6,6 @@ import {
     StartTranscriptionJobCommand
 } from "@aws-sdk/client-transcribe";
 import type {ActionArgs} from "@remix-run/node";
-import {redirect} from "@remix-run/router";
 
 const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
@@ -24,7 +23,11 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
     }
 
     const formData = await request.formData();
-    const s3Filename = formData.get('s3Filename') as FormDataEntryValue
+    const s3Filename = formData.get('s3Filename')
+
+    if (!s3Filename) {
+        throw new Error('Did not get expected form data value')
+    }
 
     const client = new TranscribeClient(config);
     const s3Location = `s3://${AWS_S3_BUCKET}/${s3Filename}`

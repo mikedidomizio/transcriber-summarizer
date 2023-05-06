@@ -26,7 +26,7 @@ export const Summarize = ({ onComplete, textToSummarize }: SummarizeProps) => {
     useEffect(() => {
         if (!ref.current && textToSummarize !== "") {
             ref.current = true
-            makeOpenAiRequest()
+            void makeOpenAiRequest()
         }
     }, [makeOpenAiRequest, textToSummarize])
 

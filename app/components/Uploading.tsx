@@ -15,7 +15,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
         formDataUpload.set("audioBlob", blob, "audio.wav");
 
         try {
-            const uploadRes = await fetch('./upload', {
+            const uploadRes = await fetch('/upload', {
                 method: 'POST',
                 body: formDataUpload
             });
@@ -36,7 +36,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
     useEffect(() => {
         if (!ref.current) {
             ref.current = true
-            upload(blob)
+            void upload(blob)
         }
     }, [upload, blob])
 

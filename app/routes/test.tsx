@@ -10,7 +10,6 @@ import {Transcribe} from "~/components/Transcribe";
 import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
 import {IdentifySpeakers} from "~/components/IdentifySpeakers";
 import {Summarize} from "~/components/Summarize";
-import {redirect} from "@remix-run/node";
 
 export const meta: V2_MetaFunction = () => {
     return [{ title: "Transcriber Summarizer" }];
@@ -20,7 +19,6 @@ export default function Test() {
     const [blob, setBlob] = useState<{ blob: Blob, blobUrl: string } | null>(null)
     const [error, setError] = useState<string | null>(null)
     const [processState, setProcessState] = useState<"start" | "uploading" | "transcribing" | "identify" | "summarizing" | "done">("start")
-    const [audioFiles, setAudioFiles] = useState<string[]>([])
     const [speakersToIdentify, setSpeakersToIdentify] = useState<Speaker[]>([])
     const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
     const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson | null>(null)
@@ -28,10 +26,12 @@ export default function Test() {
 
     useEffect(() => {
         return () => {
-            // release the resources
-            audioFiles.forEach(i => URL.revokeObjectURL(i))
+            if (blob?.blobUrl) {
+                // release the resources
+                URL.revokeObjectURL(blob?.blobUrl)
+            }
         }
-    }, [audioFiles])
+    }, [blob])
 
     const upload = (blob: Blob) => {
         const blobUrl = URL.createObjectURL(blob)
@@ -41,8 +41,8 @@ export default function Test() {
         setProcessState("uploading")
     }
 
-    const summarizing = async(textforOpenAi: string) => {
-        setTranscribeText(textforOpenAi)
+    const summarizing = async(textForOpenAi: string) => {
+        setTranscribeText(textForOpenAi)
         setProcessState("summarizing")
     }
 
@@ -57,7 +57,6 @@ export default function Test() {
     }
 
     const handleFinishIdentifying = (replacementSpeakers: Replacement[]) => {
-
         if (transcribeJobJSON) {
             // todo setting the state, while also updating the state right after?
             setTranscribeJobJSON((json) => {
