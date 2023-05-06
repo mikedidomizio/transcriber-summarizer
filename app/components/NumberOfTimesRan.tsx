@@ -1,6 +1,7 @@
-import React, {useCallback, useEffect, useState} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 
 export const NumberOfTimesRan = () => {
+  const ref = useRef(false)
   const [numberOfTimes, setNumberOfTimes] = useState(-1)
 
   const fetchNumberOfResults = useCallback(async() => {
@@ -10,7 +11,10 @@ export const NumberOfTimesRan = () => {
   }, [])
 
   useEffect(() => {
-    void fetchNumberOfResults()
+    if (!ref.current) {
+      ref.current = true
+      void fetchNumberOfResults()
+    }
   }, [fetchNumberOfResults])
 
   return <div className="stats stats-vertical shadow mt-4">
