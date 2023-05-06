@@ -24,6 +24,7 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
 
     const formData = await request.formData();
     const s3Filename = formData.get('s3Filename')
+    const maxNumberOfSpeakers = formData.get('maxNumberOfSpeakers') as string | null
 
     if (!s3Filename) {
         throw new Error('Did not get expected form data value')
@@ -31,6 +32,7 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
 
     const client = new TranscribeClient(config);
     const s3Location = `s3://${AWS_S3_BUCKET}/${s3Filename}`
+    const checkedMaxNumberOfSpeakers = maxNumberOfSpeakers ? parseInt(maxNumberOfSpeakers, 10) : 10
 
     const input = {
         LanguageCode: 'en-US',
@@ -40,8 +42,7 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
             MediaFileUri: s3Location,
         },
         Settings: {
-            // todo this should be a parameter that is supplied
-            MaxSpeakerLabels: 2,
+            MaxSpeakerLabels: checkedMaxNumberOfSpeakers,
             ShowSpeakerLabels: true,
         }
     }

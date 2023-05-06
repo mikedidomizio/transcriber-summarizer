@@ -1,14 +1,18 @@
-import React, {useCallback, useEffect, useRef} from "react";
+import React, {useCallback, useEffect, useRef, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
+import {MaxNumberOfSpeakers} from "~/components/MaxNumberOfSpeakers";
+
+type CallbackObject = { filename: string, maxNumberOfSpeakers: number | null }
 
 type UploadingProps = {
     blob: Blob,
-    onComplete: (filename: string) => void
+    onComplete: (callbackObject: CallbackObject) => void
     onError: (errorText: string) => void
 }
 
 export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
     const ref = useRef(false)
+    const [maxNumberOfSpeakers, setMaxNumberOfSpeakers] = useState<number | null>(null)
 
     const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
@@ -27,7 +31,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
                 return
             }
 
-            onComplete(uploadResponse.filename)
+            onComplete({ filename: uploadResponse.filename, maxNumberOfSpeakers })
         } catch(e) {
             onError("Failed on uploading to AWS")
         }
@@ -44,6 +48,9 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
         <div className="hero-content text-center">
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">Uploading your file</h1>
+                <div className="flex place-content-center">
+                    <MaxNumberOfSpeakers onSubmit={setMaxNumberOfSpeakers} />
+                </div>
             </div>
         </div>
     </div>
