@@ -1,8 +1,10 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
-import {MaxNumberOfSpeakers} from "~/components/MaxNumberOfSpeakers";
+import type { Options} from "~/components/TranscribeOptions";
+import {TranscribeOptions} from "~/components/TranscribeOptions";
 
-type CallbackObject = { filename: string, maxNumberOfSpeakers: number | null }
+type Filename = { filename: string }
+type CallbackObject = Filename | Filename & Options
 
 type UploadingProps = {
     blob: Blob,
@@ -12,7 +14,7 @@ type UploadingProps = {
 
 export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
     const ref = useRef(false)
-    const [maxNumberOfSpeakers, setMaxNumberOfSpeakers] = useState<number | null>(null)
+    const [options, setOptions] = useState<Options | null>(null)
 
     const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
@@ -31,11 +33,20 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
                 return
             }
 
-            onComplete({ filename: uploadResponse.filename, maxNumberOfSpeakers })
+            if (options) {
+                onComplete({
+                    ...{ filename: uploadResponse.filename },
+                    ...options
+                })
+                return
+            }
+
+            onComplete({ filename: uploadResponse.filename })
+
         } catch(e) {
             onError("Failed on uploading to AWS")
         }
-    },[onComplete, onError])
+    },[onComplete, onError, options])
 
     useEffect(() => {
         if (!ref.current) {
@@ -49,7 +60,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">Uploading your file</h1>
                 <div className="flex place-content-center">
-                    <MaxNumberOfSpeakers onSubmit={setMaxNumberOfSpeakers} />
+                    <TranscribeOptions onSubmit={setOptions} />
                 </div>
             </div>
         </div>

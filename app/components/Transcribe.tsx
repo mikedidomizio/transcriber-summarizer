@@ -2,7 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import {useTranscribeJob} from "~/hooks/useTranscribeJob";
 import type {Speaker} from "~/components/IdentifySpeakers";
 import {NumberOfTimesRan} from "~/components/NumberOfTimesRan";
-import {MaxNumberOfSpeakers} from "~/components/MaxNumberOfSpeakers";
+import {TranscribeOptions} from "~/components/TranscribeOptions";
 
 type TranscribeProps = {
     filename: string,
@@ -64,8 +64,8 @@ export const Transcribe = ({ filename, maxNumberOfSpeakers, onComplete }: Transc
                 </> : null}
 
                 {!maxNumberOfSpeakersState ?
-                  <MaxNumberOfSpeakers onSubmit={setMaxNumberOfSpeakersState}
-                                       label="Almost ready to transcribe your audio but first, What is the max number of speakers in this audio?" /> : null}
+                  <TranscribeOptions onSubmit={setMaxNumberOfSpeakersState}
+                                     label="Almost ready to transcribe your audio but first, What is the max number of speakers in this audio?" /> : null}
         </div>
     </div>
     </div>
