@@ -8,9 +8,9 @@ if (!OPENAI_API_KEY) {
     throw new Error('OPEN API key not set')
 }
 
-export const SummarizeFormData: Record<'summarizedTextForOpenAI', string> = {
-    summarizedTextForOpenAI: 'summarizedTextForOpenAI'
-} as const
+export enum SummarizeFormData {
+    summarizedTextForOpenAI = 'summarizedTextForOpenAI'
+}
 
 export const action = async ({request}: ActionArgs) => {
     const configuration = new Configuration({

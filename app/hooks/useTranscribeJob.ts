@@ -2,6 +2,8 @@ import {useCallback, useEffect, useState} from "react";
 import type {Speaker} from "~/components/IdentifySpeakers";
 import type {Segment} from "~/lib/aws-transcribe.types";
 import type {GetTranscriptionJobResponse} from "@aws-sdk/client-transcribe";
+import {PollTranscribeJobFormData} from "~/routes/pollTranscribeJob";
+import {GetText} from "~/routes/getText";
 
 const getUniqueSpeakers = (speakers: Speaker[]): Speaker[] => {
   return speakers.filter((obj, index, arr) => {
@@ -25,7 +27,7 @@ export const useTranscribeJob = (jobName: string | undefined) => {
 
   const getText = useCallback(async(transcriptionJobFileUri: string) => {
     const formDataGetText = new FormData()
-    formDataGetText.set("transcriptionJobFileUri", transcriptionJobFileUri)
+    formDataGetText.set(GetText.transcriptionJobFileUri, transcriptionJobFileUri)
 
     const res = await fetch('/getText', {
       method: 'POST',
@@ -51,7 +53,7 @@ export const useTranscribeJob = (jobName: string | undefined) => {
 
   const pollTranscribeJob = useCallback(async(jobName: string) => {
     const formDataPollingTranscribeJob = new FormData()
-    formDataPollingTranscribeJob.set("jobName", jobName)
+    formDataPollingTranscribeJob.set(PollTranscribeJobFormData.jobName, jobName)
 
     const pollTranscribePollRes = await fetch('/pollTranscribeJob', {
       method: 'POST',
