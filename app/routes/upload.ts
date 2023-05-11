@@ -8,9 +8,9 @@ import {
 } from "@remix-run/node";
 import * as fs from "fs";
 
-const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
+const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
-if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
+if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
@@ -33,7 +33,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     const audioBlob  = formData.get('audioBlob')
 
     const client = new S3Client({
-        region: 'us-east-1',
+        region: AWS_REGION,
         credentials:{
             accessKeyId: AWS_ACCESS_KEY_ID as string,
             secretAccessKey: AWS_SECRET_ACCESS_KEY as string

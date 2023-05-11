@@ -4,14 +4,14 @@ import {
 import type { PutObjectCommandOutput} from "@aws-sdk/client-s3";
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 
-const { AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
+const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
 
-if (!AWS_ACCESS_KEY_ID || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
+if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
 const client = new S3Client({
-    region: 'us-east-1',
+    region: AWS_REGION,
     credentials:{
         accessKeyId: AWS_ACCESS_KEY_ID as string,
         secretAccessKey: AWS_SECRET_ACCESS_KEY as string

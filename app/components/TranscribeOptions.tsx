@@ -3,11 +3,11 @@ import React, { useState} from "react";
 
 type SummaryStyle = "Summary" | "BulletPoints"
 
-export type Options = { bulletPoints: number, maxNumberOfSpeakers: number, summaryStyle: SummaryStyle }
+export type TranscribeOptionsArgs = { bulletPoints: number | null, maxNumberOfSpeakers: number | null, summaryStyle: SummaryStyle | null }
 
 type TranscribeOptionsProps = {
   label?: string
-  onSubmit: ({ bulletPoints, maxNumberOfSpeakers, summaryStyle }: Options) => void
+  onSubmit: ({ bulletPoints, maxNumberOfSpeakers, summaryStyle }: TranscribeOptionsArgs) => void
 }
 
 export const TranscribeOptions = ({ onSubmit, label }: TranscribeOptionsProps) => {

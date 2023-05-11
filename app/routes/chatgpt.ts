@@ -8,13 +8,17 @@ if (!OPENAI_API_KEY) {
     throw new Error('OPEN API key not set')
 }
 
+export const SummarizeFormData: Record<'summarizedTextForOpenAI', string> = {
+    summarizedTextForOpenAI: 'summarizedTextForOpenAI'
+} as const
+
 export const action = async ({request}: ActionArgs) => {
     const configuration = new Configuration({
         apiKey: OPENAI_API_KEY,
     });
 
     const formData = await request.formData();
-    const summarizedTextForOpenAI = formData.get('summarizedTextForOpenAI') as string
+    const summarizedTextForOpenAI = formData.get(SummarizeFormData.summarizedTextForOpenAI) as string
 
     const openAiPrompt = `Summarize the following discussion:
         ${summarizedTextForOpenAI}
