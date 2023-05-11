@@ -13,6 +13,11 @@ if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKE
     throw new Error('AWS environment variables not set up correctly')
 }
 
+export enum TranscribeFormData {
+    's3Filename' = 's3Filename',
+    'maxNumberOfSpeakers' = 'maxNumberOfSpeakers'
+}
+
 export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJobCommandOutput | any> => {
     const config = {
         region: AWS_REGION,
@@ -23,8 +28,8 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
     }
 
     const formData = await request.formData();
-    const s3Filename = formData.get('s3Filename')
-    const maxNumberOfSpeakers = formData.get('maxNumberOfSpeakers') as string | null
+    const s3Filename = formData.get(TranscribeFormData.s3Filename)
+    const maxNumberOfSpeakers = formData.get(TranscribeFormData.maxNumberOfSpeakers) as string | null
 
     if (!s3Filename) {
         throw new Error('Did not get expected form data value')

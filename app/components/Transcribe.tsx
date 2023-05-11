@@ -4,6 +4,7 @@ import type {Speaker} from "~/components/IdentifySpeakers";
 import {NumberOfTimesRan} from "~/components/NumberOfTimesRan";
 import type { TranscribeOptionsArgs} from "~/components/TranscribeOptions";
 import {TranscribeOptions} from "~/components/TranscribeOptions";
+import {TranscribeFormData} from "~/routes/transcribe";
 
 type TranscribeProps = {
     filename: string,
@@ -19,8 +20,8 @@ export const Transcribe = ({ filename, maxNumberOfSpeakers, onComplete }: Transc
 
     const createTranscribeJob = useCallback(async() => {
         const formDataTranscribe = new FormData()
-        formDataTranscribe.set("s3Filename", filename)
-        formDataTranscribe.set("maxNumberOfSpeakers", String(maxNumberOfSpeakersState))
+        formDataTranscribe.set(TranscribeFormData.s3Filename, filename)
+        formDataTranscribe.set(TranscribeFormData.maxNumberOfSpeakers, String(maxNumberOfSpeakersState))
 
         const transcribeRes = await fetch('/transcribe', {
             method: 'POST',

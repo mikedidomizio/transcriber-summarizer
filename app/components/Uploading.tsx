@@ -2,6 +2,7 @@ import React, {useCallback, useEffect, useRef, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
 import type { TranscribeOptionsArgs} from "~/components/TranscribeOptions";
 import {TranscribeOptions} from "~/components/TranscribeOptions";
+import {UploadFormData} from "~/routes/upload";
 
 type Filename = { filename: string }
 type CallbackObject = Filename & TranscribeOptionsArgs
@@ -18,7 +19,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
 
     const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
-        formDataUpload.set("audioBlob", blob, "audio.wav");
+        formDataUpload.set(UploadFormData.audioBlob, blob, "audio.wav");
 
         try {
             const uploadRes = await fetch('/upload', {

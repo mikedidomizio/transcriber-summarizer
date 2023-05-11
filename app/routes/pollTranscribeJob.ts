@@ -13,6 +13,10 @@ if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKE
     throw new Error('AWS environment variables not set up correctly')
 }
 
+export enum PollTranscribeJobFormData {
+    'jobName' = 'jobName'
+}
+
 export const action = async ({request}: ActionArgs): Promise<GetTranscriptionJobCommandOutput> => {
     const config = {
         region: AWS_REGION,
@@ -23,7 +27,7 @@ export const action = async ({request}: ActionArgs): Promise<GetTranscriptionJob
     }
 
     const formData = await request.formData();
-    const jobName = formData.get('jobName') as string
+    const jobName = formData.get(PollTranscribeJobFormData.jobName) as string
 
     const client = new TranscribeClient(config);
     const input = {

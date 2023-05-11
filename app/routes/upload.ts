@@ -16,6 +16,10 @@ if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKE
 
 export type UploadResponse = { filename?: string, status: number }
 
+export enum UploadFormData {
+    audioBlob = 'audioBlob'
+}
+
 export const action = async ({request}: ActionArgs): Promise<UploadResponse> => {
     const uploadHandler = unstable_composeUploadHandlers(
         unstable_createFileUploadHandler({
@@ -30,7 +34,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
         uploadHandler
     );
 
-    const audioBlob  = formData.get('audioBlob')
+    const audioBlob  = formData.get(UploadFormData.audioBlob)
 
     const client = new S3Client({
         region: AWS_REGION,
