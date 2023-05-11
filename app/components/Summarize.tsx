@@ -1,4 +1,5 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
+import {SummarizeFormData} from "~/routes/chatgpt";
 
 type SummarizeProps = {
     onComplete: (responseFromOpenAI: string) => void
@@ -11,7 +12,7 @@ export const Summarize = ({ onComplete, textToSummarize }: SummarizeProps) => {
 
     const makeOpenAiRequest = useCallback(async() => {
         const formDataSummarizing = new FormData()
-        formDataSummarizing.set("summarizedTextForOpenAI", textToSummarize)
+        formDataSummarizing.set(SummarizeFormData.summarizedTextForOpenAI, textToSummarize)
 
         const res = await fetch('/chatgpt', {
             method: 'POST',

@@ -1,10 +1,10 @@
 import React, {useCallback, useEffect, useRef, useState} from "react";
 import type {UploadResponse} from "~/routes/upload";
-import type { Options} from "~/components/TranscribeOptions";
+import type { TranscribeOptionsArgs} from "~/components/TranscribeOptions";
 import {TranscribeOptions} from "~/components/TranscribeOptions";
 
 type Filename = { filename: string }
-type CallbackObject = Filename | Filename & Options
+type CallbackObject = Filename & TranscribeOptionsArgs
 
 type UploadingProps = {
     blob: Blob,
@@ -14,7 +14,7 @@ type UploadingProps = {
 
 export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
     const ref = useRef(false)
-    const [options, setOptions] = useState<Options | null>(null)
+    const [options, setOptions] = useState<TranscribeOptionsArgs | null>(null)
 
     const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
@@ -41,7 +41,12 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
                 return
             }
 
-            onComplete({ filename: uploadResponse.filename })
+            const nullOptions = { bulletPoints: null, maxNumberOfSpeakers: null, summaryStyle: null }
+
+            onComplete({
+                ...{ filename: uploadResponse.filename },
+                ...nullOptions
+            })
 
         } catch(e) {
             onError("Failed on uploading to AWS")

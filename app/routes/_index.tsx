@@ -97,7 +97,7 @@ export default function Index() {
   }
 
   if (processState === "uploading" && blob) {
-    return <Uploading blob={blob.blob} onComplete={({ filename, maxNumberOfSpeakers}) => {
+    return <Uploading blob={blob.blob} onComplete={({ filename, maxNumberOfSpeakers }) => {
       setTranscribeJob(filename)
       setMaxNumberOfSpeakers(maxNumberOfSpeakers)
       setProcessState("transcribing")
@@ -105,7 +105,7 @@ export default function Index() {
   }
 
   if (processState === "transcribing" && transcribeJob) {
-    return <Transcribe blobUrl={blob?.blobUrl || ''} filename={transcribeJob} onComplete={handleCompleteTranscribing} maxNumberOfSpeakers={maxNumberOfSpeakers} />
+    return <Transcribe filename={transcribeJob} onComplete={handleCompleteTranscribing} maxNumberOfSpeakers={maxNumberOfSpeakers} />
   }
 
   if (processState === "identify") {
