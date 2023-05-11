@@ -41,7 +41,7 @@ export const TranscribeOptions = ({ onSubmit, label }: TranscribeOptionsProps) =
         <label className="label">
           <span className="label-text">Number of bullet points</span>
         </label>
-        <input onChange={(e) => setNumberOfBulletPoints(parseInt(e.target.value, 10))} type="number" value={numberOfBulletPoints} className="input input-bordered w-full max-w-xs" />
+        <input min="1" onChange={(e) => setNumberOfBulletPoints(parseInt(e.target.value, 10))} type="number" value={numberOfBulletPoints} className="input input-bordered w-full max-w-xs" />
       </div>
     : null}
 
