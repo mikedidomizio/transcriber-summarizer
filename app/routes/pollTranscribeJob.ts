@@ -21,19 +21,23 @@ export const action = async ({request}: ActionArgs): Promise<GetTranscriptionJob
     const config = {
         region: AWS_REGION,
         credentials:{
-            accessKeyId: AWS_ACCESS_KEY_ID as string,
-            secretAccessKey: AWS_SECRET_ACCESS_KEY as string
+            accessKeyId: AWS_ACCESS_KEY_ID,
+            secretAccessKey: AWS_SECRET_ACCESS_KEY
         }
     }
 
     const formData = await request.formData();
-    const jobName = formData.get(PollTranscribeJobFormData.jobName) as string
+    const jobName = formData.get(PollTranscribeJobFormData.jobName)
 
-    const client = new TranscribeClient(config);
-    const input = {
-        TranscriptionJobName: jobName,
-    };
+    if (jobName) {
+        const client = new TranscribeClient(config);
+        const input = {
+            TranscriptionJobName: jobName as string,
+        };
 
-    const command = new GetTranscriptionJobCommand(input)
-    return client.send(command)
+        const command = new GetTranscriptionJobCommand(input)
+        return client.send(command)
+    }
+
+    throw new Error("Dont have right form data")
 }

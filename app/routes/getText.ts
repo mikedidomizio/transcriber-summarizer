@@ -11,7 +11,11 @@ export enum GetText {
  */
 export const action = async ({request}: ActionArgs): Promise<any> => {
     const formData = await request.formData();
-    const transcriptionJobFileUri = formData.get(GetText.transcriptionJobFileUri) as string
+    const transcriptionJobFileUri = formData.get(GetText.transcriptionJobFileUri)
 
-    return fetch(transcriptionJobFileUri)
+    if (transcriptionJobFileUri) {
+        return fetch(transcriptionJobFileUri as string)
+    }
+
+    throw new Error("Don't have file uri")
 }
