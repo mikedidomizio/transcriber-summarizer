@@ -2,6 +2,7 @@ import {AudioRecorder} from "react-audio-voice-recorder";
 import type {ChangeEvent} from "react";
 import React, {useState} from "react";
 import {ErrorAlert} from "~/components/ErrorAlert";
+import {Link} from "@remix-run/react";
 
 type GettingStartedProps = {
     maxAudioDurationInSeconds: number
@@ -49,12 +50,11 @@ export const GettingStarted = ({ maxAudioDurationInSeconds, onFinishRecording }:
         <div className="hero-content text-center">
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">Transcriber Summarizer</h1>
-                <h2 className="text-2xl font-bold pt-2">By Mike DiDomizio</h2>
                 <p className="py-6">I have the ability to take audio and summarize it for you
                     <br/>
                     Click the record button below to get started!
                 </p>
-                <div className="flex flex-col">
+                <div className="flex flex-col mb-4">
                     {error ? <div className="mb-4"><ErrorAlert text={error} /></div> : null}
                     <div className="flex place-content-center"><AudioRecorder onRecordingComplete={onFinishRecording} /></div>
                     <div className="my-4">- or -</div>
@@ -62,6 +62,7 @@ export const GettingStarted = ({ maxAudioDurationInSeconds, onFinishRecording }:
                     <input type="file" className="file-input w-full max-w-xs" onChange={handleUpload} accept=".mp3,audio/*"/>
                     </div>
                 </div>
+                <h2 className="text-1xl font-bold"><Link to="https://linktr.ee/mikedidomizio" target="_blank">Built by Mike DiDomizio</Link></h2>
             </div>
         </div>
     </div>
