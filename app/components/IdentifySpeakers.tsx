@@ -33,7 +33,7 @@ export const IdentifySpeakers = ({ blobUrl, onFinish, speakers }: IdentifySpeake
             <div className="max-w-lg">
                 <h1 className="text-4xl font-bold">Cool we're almost done!</h1>
                 {speakers.length > 0 ? <>
-                    <p>Below are recordings of what were identified as different speakers.  Let's give names to these awesome people</p>
+                    <p>Below are recordings of what were identified as different speakers.  Press the play button to hear audio for when that person began speaking</p>
                     <div className="overflow-x-auto my-4">
                         <table className="table w-full">
                             <thead>

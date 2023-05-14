@@ -4,9 +4,9 @@ import {
 import type { PutObjectCommandOutput} from "@aws-sdk/client-s3";
 import {GetObjectCommand, PutObjectCommand, S3Client} from "@aws-sdk/client-s3";
 
-const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
+const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_TAGGING } = process.env;
 
-if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
+if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET || !AWS_TAGGING) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
@@ -42,6 +42,7 @@ const updateFile = async(num: number): Promise<PutObjectCommandOutput> => {
         Bucket: AWS_S3_BUCKET,
         Key: fileName,
         Body: "" + num,
+        Tagging: AWS_TAGGING
     });
 
     return client.send(command);
