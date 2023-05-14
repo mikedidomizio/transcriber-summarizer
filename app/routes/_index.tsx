@@ -4,18 +4,30 @@ import React, {useEffect, useState} from "react";
 import {separateBySpeaker} from "~/lib/transcribeBySpeaker";
 import type {AwsTranscribeJobJson} from "~/lib/aws-transcribe.types";
 import {GettingStarted} from "~/components/GettingStarted";
-import {Error} from "~/components/Error";
+import {Error as ErrorComponent} from "~/components/Error";
 import {Uploading} from "~/components/Uploading";
 import {Transcribe} from "~/components/Transcribe";
 import type { Replacement, Speaker} from "~/components/IdentifySpeakers";
 import {IdentifySpeakers} from "~/components/IdentifySpeakers";
 import {Summarize} from "~/components/Summarize";
+import {json} from "@remix-run/node";
+import { useLoaderData } from "@remix-run/react";
 
 export const meta: V2_MetaFunction = () => {
   return [{ title: "Transcriber Summarizer" }];
 };
 
+export async function loader() {
+  return json({
+    ENV: {
+      MAX_AUDIO_DURATION: process.env.MAX_AUDIO_DURATION,
+    },
+  });
+}
+
+
 export default function Index() {
+  const data = useLoaderData<typeof loader>();
   const [blob, setBlob] = useState<{ blob: Blob, blobUrl: string } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [processState, setProcessState] = useState<"start" | "uploading" | "transcribing" | "identify" | "summarizing" | "done">("start")
@@ -89,11 +101,11 @@ export default function Index() {
   }
 
   if (error !== null) {
-    return <Error error={error} />
+    return <ErrorComponent error={error} />
   }
 
   if (processState === "start") {
-    return <GettingStarted onFinishRecording={upload} />
+    return <GettingStarted maxAudioDurationInSeconds={parseInt(data.ENV.MAX_AUDIO_DURATION as string, 10)} onFinishRecording={upload} />
   }
 
   if (processState === "uploading" && blob) {

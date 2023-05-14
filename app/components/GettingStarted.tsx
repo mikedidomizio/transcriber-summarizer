@@ -1,14 +1,46 @@
 import {AudioRecorder} from "react-audio-voice-recorder";
 import type {ChangeEvent} from "react";
-import React from "react";
+import React, {useState} from "react";
+import {ErrorAlert} from "~/components/ErrorAlert";
 
 type GettingStartedProps = {
+    maxAudioDurationInSeconds: number
     onFinishRecording: (blob: Blob) => void
 }
 
-export const GettingStarted = ({ onFinishRecording }: GettingStartedProps) => {
-    const handleUpload = (e: ChangeEvent<HTMLInputElement>) => {
+const getDurationInSecondsOfAudioFile = async (blob: Blob): Promise<{ duration: number}> => {
+    return new Promise((resolve) => {
+        const objectURL = URL.createObjectURL(blob);
+        const audio = new Audio(objectURL);
+
+        const listener = () => {
+            URL.revokeObjectURL(objectURL);
+            audio.removeEventListener("canplaythrough", listener, false)
+            return resolve({
+                duration: parseInt(audio.duration as unknown as string, 10),
+            })
+        }
+
+        audio.addEventListener(
+          "canplaythrough",
+          listener,
+          false,
+        );
+    })
+}
+
+export const GettingStarted = ({ maxAudioDurationInSeconds, onFinishRecording }: GettingStartedProps) => {
+    const [error, setError] = useState<string | null>(null)
+    const handleUpload = async(e: ChangeEvent<HTMLInputElement>) => {
+        setError(null)
         if (e && e.target?.files) {
+            const {duration} = await getDurationInSecondsOfAudioFile(e.target.files[0])
+
+            if (duration > maxAudioDurationInSeconds) {
+                setError(`Audio cannot be longer than ${maxAudioDurationInSeconds} seconds`)
+                return
+            }
+
             onFinishRecording(e.target.files[0])
         }
     }
@@ -23,10 +55,11 @@ export const GettingStarted = ({ onFinishRecording }: GettingStartedProps) => {
                     Click the record button below to get started!
                 </p>
                 <div className="flex flex-col">
+                    {error ? <div className="mb-4"><ErrorAlert text={error} /></div> : null}
                     <div className="flex place-content-center"><AudioRecorder onRecordingComplete={onFinishRecording} /></div>
                     <div className="my-4">- or -</div>
                     <div className="flex place-content-center">
-                    <input type="file" className="file-input w-full max-w-xs" onChange={(e) => handleUpload(e)} accept=".mp3,audio/*"/>
+                    <input type="file" className="file-input w-full max-w-xs" onChange={handleUpload} accept=".mp3,audio/*"/>
                     </div>
                 </div>
             </div>
