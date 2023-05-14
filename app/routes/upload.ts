@@ -15,6 +15,12 @@ if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKE
     throw new Error('AWS environment variables not set up correctly')
 }
 
+const { MAX_AUDIO_FILE_SIZE } = process.env
+
+if (!MAX_AUDIO_FILE_SIZE) {
+    throw new Error("Could not get max audio file size")
+}
+
 export type UploadResponse = { filename?: string, status: number }
 
 export enum UploadFormData {
@@ -25,7 +31,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     const uploadHandler = unstable_composeUploadHandlers(
         unstable_createFileUploadHandler({
             // directory: './public/uploads',
-            maxPartSize: 20_000_000,
+            maxPartSize: MAX_AUDIO_FILE_SIZE as string as unknown as number,
             file: ({ filename }) => filename,
         }),
         unstable_createMemoryUploadHandler()
@@ -47,11 +53,11 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     });
 
     const readableStream = fs.createReadStream((audioBlob as any).filepath);
-    const newFileNameWithTimestamp = `audio-${uuidv4()}.webm`
+    const newFilenameWithUuid = `audio-${uuidv4()}.webm`
 
     const command = new PutObjectCommand({
         Bucket: AWS_S3_BUCKET,
-        Key: newFileNameWithTimestamp,
+        Key: newFilenameWithUuid,
         Body: readableStream,
         ContentType: 'audio/webm',
         Tagging: AWS_TAGGING
@@ -62,7 +68,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
 
         return json(
             {
-                "filename": newFileNameWithTimestamp,
+                "filename": newFilenameWithUuid,
                 status: 201,
             }
         );
