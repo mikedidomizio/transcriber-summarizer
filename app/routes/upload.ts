@@ -7,10 +7,11 @@ import {
     unstable_parseMultipartFormData
 } from "@remix-run/node";
 import * as fs from "fs";
+import { v4 as uuidv4 } from 'uuid';
 
-const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET } = process.env;
+const { AWS_ACCESS_KEY_ID, AWS_REGION, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_TAGGING } = process.env;
 
-if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET) {
+if (!AWS_ACCESS_KEY_ID || !AWS_REGION || !AWS_SECRET_ACCESS_KEY || !AWS_S3_BUCKET || !AWS_TAGGING) {
     throw new Error('AWS environment variables not set up correctly')
 }
 
@@ -24,6 +25,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     const uploadHandler = unstable_composeUploadHandlers(
         unstable_createFileUploadHandler({
             // directory: './public/uploads',
+            maxPartSize: 20_000_000,
             file: ({ filename }) => filename,
         }),
         unstable_createMemoryUploadHandler()
@@ -45,13 +47,14 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
     });
 
     const readableStream = fs.createReadStream((audioBlob as any).filepath);
-    const newFileNameWithTimestamp = `hello-s3-${new Date().getTime()}.webm`
+    const newFileNameWithTimestamp = `audio-${uuidv4()}.webm`
 
     const command = new PutObjectCommand({
         Bucket: AWS_S3_BUCKET,
         Key: newFileNameWithTimestamp,
         Body: readableStream,
         ContentType: 'audio/webm',
+        Tagging: AWS_TAGGING
     });
 
     try {
