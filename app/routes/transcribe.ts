@@ -57,5 +57,7 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
     }
 
     const command = new StartTranscriptionJobCommand(input);
+
+    // todo should we `destroy` client?
     return client.send(command);
 }
