@@ -35,7 +35,6 @@ export default function Index() {
   const [transcribeJob, setTranscribeJob] = useState<string | null>(null)
   const [transcribeJobJSON, setTranscribeJobJSON] = useState<AwsTranscribeJobJson | null>(null)
   const [transcribeText, setTranscribeText] = useState("")
-  const [maxNumberOfSpeakers, setMaxNumberOfSpeakers] = useState<number | null>(null)
 
   useEffect(() => {
     return () => {
@@ -109,15 +108,14 @@ export default function Index() {
   }
 
   if (processState === "uploading" && blob) {
-    return <Uploading blob={blob.blob} onComplete={({ filename, maxNumberOfSpeakers }) => {
+    return <Uploading blob={blob.blob} onComplete={({ filename }) => {
       setTranscribeJob(filename)
-      setMaxNumberOfSpeakers(maxNumberOfSpeakers)
       setProcessState("transcribing")
     }} onError={setError} />
   }
 
   if (processState === "transcribing" && transcribeJob) {
-    return <Transcribe filename={transcribeJob} onComplete={handleCompleteTranscribing} maxNumberOfSpeakers={maxNumberOfSpeakers} />
+    return <Transcribe filename={transcribeJob} onComplete={handleCompleteTranscribing} />
   }
 
   if (processState === "identify") {

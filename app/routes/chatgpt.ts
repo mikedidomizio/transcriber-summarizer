@@ -1,4 +1,5 @@
 import type {ActionArgs} from "@remix-run/node";
+import {SummaryStyle} from "~/components/TranscribeOptions";
 
 const { Configuration, OpenAIApi } = require("openai");
 
@@ -9,8 +10,12 @@ if (!OPENAI_API_KEY) {
 }
 
 export enum SummarizeFormData {
-    summarizedTextForOpenAI = 'summarizedTextForOpenAI'
+    bulletPoints = 'bulletPoints',
+    summarizedTextForOpenAI = 'summarizedTextForOpenAI',
+    summaryStyle = 'summaryStyle'
 }
+
+const replaceWithBr = (str: string) => str.replace(/\n/g, "<br />")
 
 export const action = async ({request}: ActionArgs) => {
     const configuration = new Configuration({
@@ -18,9 +23,21 @@ export const action = async ({request}: ActionArgs) => {
     });
 
     const formData = await request.formData();
+    const bulletPoints = formData.get(SummarizeFormData.bulletPoints)
+    const summaryStyle = formData.get(SummarizeFormData.summaryStyle) as SummaryStyle | null
+
+    if (summaryStyle !== "BulletPoints" && summaryStyle !== "Summary") {
+        throw new Error("Did not receive proper summary style")
+    }
+
     const summarizedTextForOpenAI = formData.get(SummarizeFormData.summarizedTextForOpenAI)
 
-    const openAiPrompt = `Summarize the following discussion:
+    const prompts: Record<SummaryStyle, string> = {
+        "BulletPoints": `Summarize the following in ${bulletPoints} bullet points, in order it was discussed: `,
+        "Summary": 'Summarize the following discussion',
+    }
+
+    const openAiPrompt = `${prompts[summaryStyle]}
         ${summarizedTextForOpenAI}
     `
 
@@ -32,5 +49,5 @@ export const action = async ({request}: ActionArgs) => {
         max_tokens: OPEN_API_MAX_TOKENS || 500,
     });
 
-    return response.data.choices[0].text
+    return replaceWithBr(response.data.choices[0].text)
 }
