@@ -36,6 +36,8 @@ export const action = async ({request}: ActionArgs): Promise<GetTranscriptionJob
         };
 
         const command = new GetTranscriptionJobCommand(input)
+
+        // todo should we `destroy` client?
         return client.send(command)
     }
 

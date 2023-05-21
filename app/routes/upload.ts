@@ -65,6 +65,7 @@ export const action = async ({request}: ActionArgs): Promise<UploadResponse> => 
 
     try {
         await client.send(command);
+        client.destroy()
 
         return json(
             {

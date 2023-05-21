@@ -27,6 +27,7 @@ const fetchFile = async(): Promise<number | null> => {
     });
 
     const response = await client.send(command);
+    client.destroy()
 
     const numberOfTimesString = await response.Body?.transformToString("utf-8")
 
