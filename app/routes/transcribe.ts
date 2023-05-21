@@ -37,11 +37,15 @@ export const action = async ({request}: ActionArgs): Promise<StartTranscriptionJ
 
     const client = new TranscribeClient(config);
     const s3Location = `s3://${AWS_S3_BUCKET}/${s3Filename}`
-    const checkedMaxNumberOfSpeakers = maxNumberOfSpeakers ? parseInt(maxNumberOfSpeakers, 10) : 10
+    let checkedMaxNumberOfSpeakers = maxNumberOfSpeakers ? parseInt(maxNumberOfSpeakers, 10) : 10
+
+    // the AWS Transcribe job does not seem to support less than 2 speakers `Member must have value greater than or equal to 2`
+    if (checkedMaxNumberOfSpeakers < 2) {
+       checkedMaxNumberOfSpeakers = 2
+    }
 
     const input = {
         LanguageCode: 'en-US',
-        // todo it should be more unique to avoid conflicts
         TranscriptionJobName: `test-transcriber-summarizer-job-${s3Filename}`,
         Media: {
             MediaFileUri: s3Location,

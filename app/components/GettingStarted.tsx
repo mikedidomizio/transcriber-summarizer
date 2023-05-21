@@ -3,6 +3,8 @@ import type {ChangeEvent} from "react";
 import React, {useState} from "react";
 import {ErrorAlert} from "~/components/ErrorAlert";
 import {Link} from "@remix-run/react";
+import {useTranscribeOptions} from "~/providers/TranscribeOptionsProvider";
+import {TranscribeOptions} from "~/components/TranscribeOptions";
 
 type GettingStartedProps = {
     maxAudioDurationInSeconds: number
@@ -59,9 +61,10 @@ export const GettingStarted = ({ maxAudioDurationInSeconds, onFinishRecording }:
                     <div className="flex place-content-center"><AudioRecorder onRecordingComplete={onFinishRecording} /></div>
                     <div className="my-4">- or -</div>
                     <div className="flex place-content-center">
-                    <input type="file" className="file-input w-full max-w-xs" onChange={handleUpload} accept=".mp3,audio/*"/>
+                        <input type="file" className="file-input w-full max-w-xs" onChange={handleUpload} accept=".mp3,audio/*"/>
                     </div>
                 </div>
+
                 <h2 className="text-1xl font-bold"><Link to="https://linktr.ee/mikedidomizio" target="_blank">Built by Mike DiDomizio</Link></h2>
             </div>
         </div>

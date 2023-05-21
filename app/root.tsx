@@ -9,6 +9,7 @@ import {
 
 import stylesheet from "~/tailwind.css";
 import type {LinksFunction} from "@remix-run/node";
+import {TranscribeOptionsProvider} from "~/providers/TranscribeOptionsProvider";
 
 export const links: LinksFunction = () => [
   { rel: "stylesheet", href: stylesheet },
@@ -24,7 +25,9 @@ export default function App() {
         <Links />
       </head>
       <body>
-        <Outlet />
+        <TranscribeOptionsProvider>
+          <Outlet />
+        </TranscribeOptionsProvider>
         <ScrollRestoration />
         <Scripts />
         <LiveReload />

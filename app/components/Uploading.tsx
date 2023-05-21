@@ -1,11 +1,11 @@
-import React, {useCallback, useEffect, useRef, useState} from "react";
+import React, {useCallback, useEffect, useRef} from "react";
 import type {UploadResponse} from "~/routes/upload";
-import type { TranscribeOptionsArgs} from "~/components/TranscribeOptions";
 import {TranscribeOptions} from "~/components/TranscribeOptions";
 import {UploadFormData} from "~/routes/upload";
+import {useTranscribeOptions} from "~/providers/TranscribeOptionsProvider";
 
 type Filename = { filename: string }
-type CallbackObject = Filename & TranscribeOptionsArgs
+type CallbackObject = Filename
 
 type UploadingProps = {
     blob: Blob,
@@ -15,7 +15,7 @@ type UploadingProps = {
 
 export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
     const ref = useRef(false)
-    const [options, setOptions] = useState<TranscribeOptionsArgs | null>(null)
+    const {options} = useTranscribeOptions()
 
     const upload = useCallback(async(blob: Blob) => {
         const formDataUpload  = new FormData();
@@ -42,11 +42,8 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
                 return
             }
 
-            const nullOptions = { bulletPoints: null, maxNumberOfSpeakers: null, summaryStyle: null }
-
             onComplete({
                 ...{ filename: uploadResponse.filename },
-                ...nullOptions
             })
 
         } catch(e) {
@@ -66,7 +63,7 @@ export const Uploading = ({ blob, onComplete, onError }: UploadingProps) => {
             <div className="max-w-md">
                 <h1 className="text-5xl font-bold">Uploading your file</h1>
                 <div className="flex place-content-center">
-                    <TranscribeOptions onSubmit={setOptions} />
+                    <TranscribeOptions />
                 </div>
             </div>
         </div>
