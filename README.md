@@ -1,6 +1,6 @@
 # Transcriber Summarizer
 
-![Picture showing the start of the application](./readme-assets/home.png)
+<img alt="Picture showing the start of the application" src="./readme-assets/home.png" />
 
 ## What is this?
 
